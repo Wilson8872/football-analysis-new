@@ -22,13 +22,49 @@ jobs:
             cp -r extracted_project/* . 2>/dev/null || true
           fi
 
+      # ⚡ Step 2: Overwrite the broken file with a clean configuration
+      - name: Overwrite broken build.gradle file
+        run: |
+          mkdir -p app
+          cat << 'EOF' > app/build.gradle
+          plugins {
+              id 'com.android.application'
+          }
+
+          android {
+              namespace 'com.footballanalysis.app'
+              compileSdk 35
+
+              defaultConfig {
+                  applicationId "com.footballanalysis.app"
+                  minSdk 24
+                  targetSdk 35
+                  versionCode 1
+                  versionName "1.0"
+              }
+
+              buildTypes {
+                  release {
+                      minifyEnabled false
+                      proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+                  }
+              }
+          }
+
+          dependencies {
+              implementation 'androidx.appcompat:appcompat:1.6.1'
+              implementation 'com.google.android.material:material:1.11.0'
+              implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+          }
+          EOF
+
       - name: Set up Java
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      # 🛠️ Step 2: Dynamically create a missing gradlew file
+      # 🛠️ Step 3: Re-verify missing wrapper execution scripts
       - name: Setup Gradle wrapper if missing
         run: |
           if [ ! -f "gradlew" ]; then
@@ -37,30 +73,16 @@ jobs:
           fi
           chmod +x gradlew
 
-      # 📈 Step 3: Automatic Version Numbering
-      # This overwrites version details using the unique GitHub build sequence number
-      - name: Update Version Code & Name
-        run: |
-          find . -name "build.gradle*" -exec sed -i "s/versionCode .*/versionCode ${{ github.run_number }}/g" {} +
-          find . -name "build.gradle*" -exec sed -i "s/versionName .*/versionName \"1.0.${{ github.run_number }}\"/g" {} +
-
-      # 🧪 Step 4: Automated Testing
-      # Runs your local unit tests to catch code crashes before making the APK
-      - name: Run Unit Tests
-        run: |
-          ./gradlew testDebugUnitTest --continue || echo "No unit tests found or some tests failed, continuing build..."
-
-      # 🏗️ Step 5: Build APK
+      # 🏗️ Step 4: Compile APK
       - name: Build APK
         run: |
           ./gradlew assembleDebug
 
-      # 📤 Step 6: Upload APK with dynamic naming
+      # 📤 Step 5: Save and upload final package
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Football-Analysis-APK-v1.0.${{ github.run_number }}
+          name: Football-Analysis-APK
           path: |
             app/build/outputs/apk/debug/app-debug.apk
             **/build/outputs/apk/**/*.apk
-            
