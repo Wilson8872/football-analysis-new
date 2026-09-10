@@ -58,14 +58,43 @@ jobs:
           }
           EOF
 
-      # ⚽ Step 3: Inject the corrected Player Lineup XML layout
+      # 📱 Step 3: Inject an official, clean Android Manifest file
+      - name: Inject Correct Android Manifest File
+        run: |
+          mkdir -p app/src/main
+          cat << 'EOF' > app/src/main/AndroidManifest.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://android.com">
+
+              <application
+                  android:allowBackup="true"
+                  android:icon="@android:drawable/sym_def_app_icon"
+                  android:label="Football Analysis"
+                  android:roundIcon="@android:drawable/sym_def_app_icon"
+                  android:supportsRtl="true"
+                  android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar">
+                  
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+
+          </manifest>
+          EOF
+
+      # ⚽ Step 4: Inject the corrected Player Lineup XML layout
       - name: Inject Custom Player Lineup Grid Interface
         run: |
           mkdir -p app/src/main/res/layout
           cat << 'EOF' > app/src/main/res/layout/fragment_lineup.xml
           <?xml version="1.0" encoding="utf-8"?>
           <androidx.constraintlayout.widget.ConstraintLayout 
-              xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:android="http://android.com"
               xmlns:app="http://android.com"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
@@ -164,7 +193,7 @@ jobs:
           </androidx.constraintlayout.widget.ConstraintLayout>
           EOF
 
-      # 🧠 Step 4: Overwrite Main Activity code to launch the Lineup screen
+      # 🧠 Step 5: Overwrite Main Activity code to launch the Lineup screen
       - name: Force MainActivity to display the Lineup UI
         run: |
           mkdir -p app/src/main/java/com/footballanalysis/app
@@ -183,7 +212,7 @@ jobs:
           }
           EOF
 
-      # ⚙️ Step 5: Force AndroidX configuration everywhere
+      # ⚙️ Step 6: Force AndroidX configuration everywhere
       - name: Force Enable AndroidX Support Everywhere
         run: |
           mkdir -p app
@@ -196,7 +225,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      # 🛠️ Step 6: Setup Gradle wrapper if missing
+      # 🛠️ Step 7: Setup Gradle wrapper if missing
       - name: Setup Gradle wrapper if missing
         run: |
           if [ ! -f "gradlew" ]; then
@@ -205,7 +234,7 @@ jobs:
           fi
           chmod +x gradlew
 
-      # 🔐 Step 7: Automatically generate release keystore passwords
+      # 🔐 Step 8: Automatically generate release keystore passwords
       - name: Generate Secure Keystore File
         run: |
           keytool -genkeypair -v \
@@ -216,20 +245,3 @@ jobs:
             -keyalg RSA -keysize 2048 -validity 10000 \
             -dname "CN=FootballAnalysis, OU=Production, O=MobileApp, L=Nairobi, S=Nairobi, C=KE"
 
-      # 🏗️ Step 8: Compile and sign the APK package
-      - name: Build Signed Release APK
-        run: |
-          ./gradlew assembleRelease \
-            -Pandroid.injected.signing.store.file=$(pwd)/app/release-keystore.jks \
-            -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" \
-            -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
-            -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}"
-
-      # 📤 Step 9: Upload final package
-      - name: Upload Verified APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Football-Analysis-v1.0.${{ github.run_number }}
-          path: |
-            app/build/outputs/apk/release/app-release.apk
-            **/build/outputs/apk/release/*.apk
