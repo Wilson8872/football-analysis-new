@@ -65,7 +65,7 @@ jobs:
           cat << 'EOF' > app/src/main/res/layout/fragment_lineup.xml
           <?xml version="1.0" encoding="utf-8"?>
           <androidx.constraintlayout.widget.ConstraintLayout 
-              xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:android="http://android.com"
               xmlns:app="http://android.com"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
@@ -82,7 +82,7 @@ jobs:
                   android:textStyle="bold"
                   android:layout_marginTop="16dp"
                   app:layout_constraintTop_toTopOf="parent"
-                  app:layout_constraintStart_of="parent"
+                  app:layout_constraintStart_toStartOf="parent"
                   app:layout_constraintEnd_toEndOf="parent" />
 
               <!-- Tactical Grid Layout for Players -->
@@ -90,14 +90,14 @@ jobs:
                   android:id="@+id/glPlayerLineupGrid"
                   android:layout_width="0dp"
                   android:layout_height="0dp"
-                  android:columnCount="4"
-                  android:rowCount="4"
+                  android:columnCount="2"
+                  android:rowCount="2"
                   android:alignmentMode="alignBounds"
                   android:useDefaultMargins="true"
                   android:layout_margin="16dp"
                   app:layout_constraintTop_toBottomOf="@id/tvFormationTitle"
                   app:layout_constraintBottom_toBottomOf="parent"
-                  app:layout_constraintStart_toStartOf="parent"
+                  app:layout_constraintStart_of="parent"
                   app:layout_constraintEnd_toEndOf="parent">
 
                   <!-- Goalkeeper Slot -->
@@ -106,7 +106,7 @@ jobs:
                       android:layout_height="wrap_content"
                       android:orientation="vertical"
                       android:gravity="center"
-                      android:layout_columnSpan="4"
+                      android:layout_columnSpan="2"
                       android:layout_gravity="center_horizontal">
                       <ImageView
                           android:layout_width="48dp"
@@ -164,7 +164,27 @@ jobs:
           </androidx.constraintlayout.widget.ConstraintLayout>
           EOF
 
-      # ⚙️ Step 4: Force AndroidX configuration everywhere
+      # 🧠 Step 4: Overwrite Main Activity code to launch the Lineup screen
+      - name: Force MainActivity to display the Lineup UI
+        run: |
+          mkdir -p app/src/main/java/com/footballanalysis/app
+          cat << 'EOF' > app/src/main/java/com/footballanalysis/app/MainActivity.java
+          package com.footballanalysis.app;
+
+          import android.os.Bundle;
+          import androidx.appcompat.app.AppCompatActivity;
+
+          public class MainActivity extends AppCompatActivity {
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  // Force the app to render our new lineup grid view on launch
+                  setContentView(R.layout.fragment_lineup);
+              }
+          }
+          EOF
+
+      # ⚙️ Step 5: Force AndroidX configuration everywhere
       - name: Force Enable AndroidX Support Everywhere
         run: |
           mkdir -p app
@@ -177,7 +197,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      # 🛠️ Step 5: Setup Gradle wrapper if missing
+      # 🛠️ Step 6: Setup Gradle wrapper if missing
       - name: Setup Gradle wrapper if missing
         run: |
           if [ ! -f "gradlew" ]; then
@@ -186,7 +206,7 @@ jobs:
           fi
           chmod +x gradlew
 
-      # 🔐 Step 6: Automatically generate release keystore passwords
+      # 🔐 Step 7: Automatically generate release keystore passwords
       - name: Generate Secure Keystore File
         run: |
           keytool -genkeypair -v \
@@ -197,7 +217,7 @@ jobs:
             -keyalg RSA -keysize 2048 -validity 10000 \
             -dname "CN=FootballAnalysis, OU=Production, O=MobileApp, L=Nairobi, S=Nairobi, C=KE"
 
-      # 🏗️ Step 7: Compile and sign the APK package
+      # 🏗️ Step 8: Compile and sign the APK package
       - name: Build Signed Release APK
         run: |
           ./gradlew assembleRelease \
@@ -206,7 +226,7 @@ jobs:
             -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
             -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}"
 
-      # 📤 Step 8: Upload final package
+      # 📤 Step 9: Upload final package
       - name: Upload Verified APK
         uses: actions/upload-artifact@v4
         with:
