@@ -14,20 +14,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 📦 Step 1: Unzip the main project archive safely
+      # 📦 Step 1: Extract your zip code safely if present
       - name: Unzip Project Archive
         run: |
-          unzip -q Football_Analysis_Android_V1.0_from_V2.30.zip -d extracted_project
-          
-      # 📂 Step 2: Search for the gradle build files and move them to the root directory
-      - name: Locate and Move Build Files
-        run: |
-          GRADLE_DIR=$(find extracted_project -name "gradlew" -printf '%h\n' | head -n 1)
-          if [ -n "$GRADLE_DIR" ]; then
-            echo "Found project files inside: $GRADLE_DIR"
-            cp -r $GRADLE_DIR/* .
-          else
-            echo "Gradle files found in root or loose uploads."
+          if [ -f "Football_Analysis_Android_V1.0_from_V2.30.zip" ]; then
+            unzip -q Football_Analysis_Android_V1.0_from_V2.30.zip -d extracted_project
+            # Move the contents out to the root so gradle can read them
+            cp -r extracted_project/* . 2>/dev/null || true
           fi
 
       - name: Set up Java
@@ -35,7 +28,14 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-          cache: 'gradle'
+
+      # 🛠️ Step 2: Dynamically create a missing gradlew file using the system's Gradle
+      - name: Setup Gradle wrapper wrapper if missing
+        run: |
+          if [ ! -f "gradlew" ]; then
+            echo "gradlew not found. Generating a new one..."
+            gradle wrapper
+          fi
 
       - name: Build APK
         run: |
@@ -46,4 +46,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Football-Analysis-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+            **/build/outputs/apk/**/*.apk
