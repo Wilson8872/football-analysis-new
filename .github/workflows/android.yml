@@ -100,7 +100,6 @@ jobs:
               android:layout_height="match_parent"
               android:background="#1E281F">
 
-              <!-- Formation Label Header -->
               <TextView
                   android:id="@+id/tvFormationTitle"
                   android:layout_width="wrap_content"
@@ -114,7 +113,6 @@ jobs:
                   app:layout_constraintStart_toStartOf="parent"
                   app:layout_constraintEnd_toEndOf="parent" />
 
-              <!-- Tactical Grid Layout for Players -->
               <GridLayout
                   android:id="@+id/glPlayerLineupGrid"
                   android:layout_width="0dp"
@@ -129,7 +127,6 @@ jobs:
                   app:layout_constraintStart_of="parent"
                   app:layout_constraintEnd_toEndOf="parent">
 
-                  <!-- Goalkeeper Slot -->
                   <LinearLayout
                       android:layout_width="wrap_content"
                       android:layout_height="wrap_content"
@@ -150,7 +147,6 @@ jobs:
                           android:textStyle="bold" />
                   </LinearLayout>
 
-                  <!-- Left Defender -->
                   <LinearLayout
                       android:layout_width="0dp"
                       android:layout_height="wrap_content"
@@ -169,7 +165,6 @@ jobs:
                           android:textSize="12sp" />
                   </LinearLayout>
 
-                  <!-- Right Defender Slot -->
                   <LinearLayout
                       android:layout_width="0dp"
                       android:layout_height="wrap_content"
@@ -245,3 +240,8 @@ jobs:
             -keyalg RSA -keysize 2048 -validity 10000 \
             -dname "CN=FootballAnalysis, OU=Production, O=MobileApp, L=Nairobi, S=Nairobi, C=KE"
 
+      # 🏗️ Step 9: Compile and sign the APK package
+      - name: Build Signed Release APK
+        run: |
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=$(pwd)/app/release-keystore.jks \
