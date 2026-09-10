@@ -22,7 +22,7 @@ jobs:
             cp -r extracted_project/* . 2>/dev/null || true
           fi
 
-      # 🔧 Step 2: Overwrite the broken build.gradle file with a clean setup
+      # 🔧 Step 2: Overwrite the build.gradle file with a release configuration
       - name: Overwrite broken build.gradle file
         run: |
           mkdir -p app
@@ -58,7 +58,7 @@ jobs:
           }
           EOF
 
-      # ⚙️ Step 3: Force AndroidX configuration everywhere to ensure compatibility
+      # ⚙️ Step 3: Force AndroidX configuration everywhere
       - name: Force Enable AndroidX Support Everywhere
         run: |
           mkdir -p app
@@ -71,7 +71,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      # 🛠️ Step 4: Re-verify missing wrapper execution scripts
+      # 🛠️ Step 4: Setup Gradle wrapper if missing
       - name: Setup Gradle wrapper if missing
         run: |
           if [ ! -f "gradlew" ]; then
@@ -80,16 +80,31 @@ jobs:
           fi
           chmod +x gradlew
 
-      # 🏗️ Step 5: Compile APK
-      - name: Build APK
+      # 🔐 Step 5: Automatically generate a brand-new release keystore
+      - name: Generate Secure Keystore File
         run: |
-          ./gradlew assembleDebug
+          keytool -genkeypair -v \
+            -keystore app/release-keystore.jks \
+            -alias "${{ secrets.KEY_ALIAS }}" \
+            -keypass "${{ secrets.KEY_PASSWORD }}" \
+            -storepass "${{ secrets.KEYSTORE_PASSWORD }}" \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=FootballAnalysis, OU=Production, O=MobileApp, L=Nairobi, S=Nairobi, C=KE"
 
-      # 📤 Step 6: Save and upload final package
-      - name: Upload APK
+      # 🏗️ Step 6: Compile and embed the newly generated keystore directly into the APK
+      - name: Build Signed Release APK
+        run: |
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=$(pwd)/app/release-keystore.jks \
+            -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" \
+            -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
+            -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}"
+
+      # 📤 Step 7: Save and upload the verified package
+      - name: Upload Verified APK
         uses: actions/upload-artifact@v4
         with:
-          name: Football-Analysis-APK
+          name: Football-Analysis-Verified-APK
           path: |
-            app/build/outputs/apk/debug/app-debug.apk
-            **/build/outputs/apk/**/*.apk
+            app/build/outputs/apk/release/app-release.apk
+            **/build/outputs/apk/release/*.apk
