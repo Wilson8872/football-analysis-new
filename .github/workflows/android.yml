@@ -14,6 +14,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 📦 Step 1: Unzip the main project archive safely
+      - name: Unzip Project Archive
+        run: |
+          unzip -q Football_Analysis_Android_V1.0_from_V2.30.zip -d extracted_project
+          
+      # 📂 Step 2: Search for the gradle build files and move them to the root directory
+      - name: Locate and Move Build Files
+        run: |
+          GRADLE_DIR=$(find extracted_project -name "gradlew" -printf '%h\n' | head -n 1)
+          if [ -n "$GRADLE_DIR" ]; then
+            echo "Found project files inside: $GRADLE_DIR"
+            cp -r $GRADLE_DIR/* .
+          else
+            echo "Gradle files found in root or loose uploads."
+          fi
+
       - name: Set up Java
         uses: actions/setup-java@v5
         with:
