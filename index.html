@@ -1,0 +1,1254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<title>Football Analysis V2.10</title>
+<style>
+:root{
+  --bg:#0b1220;--panel:#111a2b;--panel2:#172237;--text:#f5f7fb;
+  --muted:#9aa8bd;--line:#27354d;--accent:#4da3ff;--good:#35c77a;
+  --bad:#ff5c67;--warn:#f2b84b;--radius:16px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.app{max-width:980px;margin:auto;padding-bottom:86px}
+header{padding:20px 16px 14px;position:sticky;top:0;background:rgba(11,18,32,.96);backdrop-filter:blur(10px);z-index:20;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand h1{font-size:21px;margin:0}.brand small{color:var(--muted)}
+.bankroll{background:var(--panel);padding:10px 12px;border:1px solid var(--line);border-radius:12px;text-align:right}
+.bankroll b{display:block;font-size:16px}
+.nav{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;padding:12px 16px;position:sticky;top:76px;background:rgba(11,18,32,.94);z-index:19}
+.nav button{border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:11px;padding:10px 5px;font-size:12px}
+.nav button.active{background:var(--accent);color:#06101f;border-color:var(--accent);font-weight:700}
+main{padding:0 16px}
+.view{display:none}.view.active{display:block}
+h2{font-size:19px;margin:18px 0 12px}
+h3{font-size:15px;margin:0 0 7px}
+.muted{color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px}
+.metric b{font-size:24px;display:block}.metric span{color:var(--muted);font-size:12px}
+.good{color:var(--good)}.bad{color:var(--bad)}.warn{color:var(--warn)}
+.match{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin:10px 0}
+.match-top{display:flex;justify-content:space-between;gap:10px}.teams{font-weight:700;font-size:16px}
+.meta{font-size:12px;color:var(--muted);margin:5px 0 12px}
+.pred{display:flex;justify-content:space-between;align-items:center;background:var(--panel2);border-radius:12px;padding:10px}
+.pred strong{font-size:14px}.odds{font-weight:800}
+.status{font-size:11px;font-weight:800;border-radius:20px;padding:5px 9px;white-space:nowrap}
+.status.PENDING{background:#3b2f17;color:#f4c866}.status.WON{background:#153d2a;color:#65e39a}.status.LOST{background:#421b22;color:#ff7e87}
+.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.btn{border:0;border-radius:10px;padding:10px 12px;background:var(--accent);color:#06101f;font-weight:700}
+.btn.secondary{background:var(--panel2);border:1px solid var(--line);color:var(--text)}
+.btn.danger{background:#421b22;color:#ff9ca3}
+input,select,textarea{width:100%;background:#0d1627;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:11px;margin:5px 0 10px}
+textarea{min-height:150px;resize:vertical}
+label{font-size:12px;color:var(--muted)}
+.filters{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.empty{padding:28px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:15px}
+.ocr-drop{border:1px dashed var(--accent);border-radius:16px;padding:18px;text-align:center;background:#0e182a}
+.review-row{border:1px solid var(--line);border-radius:14px;padding:12px;margin:9px 0;background:var(--panel)}
+.review-row .twocol{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.bottom{position:fixed;bottom:0;left:0;right:0;background:rgba(11,18,32,.97);border-top:1px solid var(--line);padding:8px 12px;z-index:30}
+.bottom-inner{max-width:980px;margin:auto;display:flex;justify-content:space-between;gap:7px}
+.bottom button{flex:1;background:transparent;color:var(--muted);border:0;font-size:11px}
+.bottom button span{display:block;font-size:19px}
+.table{width:100%;border-collapse:collapse;font-size:12px}.table th,.table td{border-bottom:1px solid var(--line);padding:9px 5px;text-align:left}.table th{color:var(--muted)}
+.notice{padding:11px 12px;background:#10233a;border:1px solid #21476e;border-radius:12px;color:#bcdcff;font-size:12px;margin:10px 0}
+@media(min-width:700px){.grid{grid-template-columns:repeat(4,1fr)}.nav{grid-template-columns:repeat(8,1fr)}.filters{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<!-- V2.25.2 TODAY'S MATCHES / DATE CONTROL -->
+<section id="giantTodayMatchesV25" style="margin:12px 0">
+<style>
+#giantTodayMatchesV25{background:#fff;border:1px solid #d1d7dc;border-radius:14px;padding:12px}
+#giantTodayMatchesV25 .tmHead{display:flex;justify-content:space-between;align-items:center;gap:8px}
+#giantTodayMatchesV25 h3{margin:0;font-size:16px}
+#giantTodayMatchesV25 .tmDate{font-size:11px;font-weight:800;color:#52606a;margin:4px 0 10px}
+#giantTodayMatchesV25 .tmRefresh{border:0;border-radius:9px;padding:8px 10px;font-weight:900}
+#giantTodayMatchesV25 .tmMatch{border-top:1px solid #e5e8ea;padding:10px 0}
+#giantTodayMatchesV25 .tmTeams{font-size:13px;font-weight:900}
+#giantTodayMatchesV25 .tmMeta{font-size:10px;color:#53616a;font-weight:700;margin-top:3px}
+#giantTodayMatchesV25 .tmSource{font-size:9px;font-weight:900;margin-top:5px}
+#giantTodayMatchesV25 .tmEmpty{padding:16px 3px;text-align:center;font-size:11px;font-weight:800;color:#59666f}
+</style>
+<div class="tmHead">
+  <h3>⚽ Today's Matches</h3>
+  <button class="tmRefresh" type="button" onclick="giantRenderTodayV25()">↻ Refresh</button>
+</div>
+<div class="tmDate" id="giantTodayDateV25"></div>
+<div id="giantTodayListV25"></div>
+
+<script>
+(function(){
+  const STORE_KEYS=['fa_matches','matches','football_matches','fa12_matches','fa21_matches','fa_data'];
+
+  function records(){
+    try{if(typeof matches!=='undefined' && Array.isArray(matches) && matches.length)return matches;}catch(e){}
+    for(const k of STORE_KEYS){
+      try{
+        const v=JSON.parse(localStorage.getItem(k)||'null');
+        if(Array.isArray(v)) return v;
+      }catch(e){}
+    }
+    return [];
+  }
+
+  function dateKey(value){
+    if(!value) return '';
+    const s=String(value).trim();
+
+    // ISO / numeric dates.
+    let m=s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+    if(m) return m[1]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[3]).padStart(2,'0');
+
+    m=s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
+    if(m) return m[3]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[1]).padStart(2,'0');
+
+    // Natural dates such as "30 August", "30 August 2026", "30 Aug".
+    const months={
+      january:1,february:2,march:3,april:4,may:5,june:6,
+      july:7,august:8,september:9,october:10,november:11,december:12,
+      jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,
+      sep:9,sept:9,oct:10,nov:11,dec:12
+    };
+    const n=s.toLowerCase().replace(/,/g,'').replace(/\b(st|nd|rd|th)\b/g,'');
+    m=n.match(/\b(\d{1,2})\s+([a-z]+)(?:\s+(\d{4}))?\b/);
+    if(m && months[m[2]]){
+      const y=m[3]?Number(m[3]):new Date().getFullYear();
+      return y+'-'+String(months[m[2]]).padStart(2,'0')+'-'+String(Number(m[1])).padStart(2,'0');
+    }
+
+    const d=new Date(s);
+    if(Number.isNaN(d.getTime())) return '';
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+
+  function todayKey(){
+    const d=new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+
+  function escapeHtml(v){
+    return String(v??'').replace(/[&<>"']/g,c=>({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    })[c]);
+  }
+
+  window.giantRenderTodayV25=function(){
+    const today=todayKey();
+    const data=records().filter(x=>{
+      const d=x.date||x.matchDate||x.kickoffDate||x.fixtureDate||x.kickoff||x.matchDateTime||x.datetime||x.createdAt;
+      return dateKey(d)===today;
+    });
+
+    document.getElementById('giantTodayDateV25').textContent=
+      new Date(today+'T00:00:00').toLocaleDateString(undefined,{
+        weekday:'long',day:'numeric',month:'long',year:'numeric'
+      });
+
+    const box=document.getElementById('giantTodayListV25');
+
+    if(!data.length){
+      box.innerHTML='<div class="tmEmpty">No matches dated today are currently stored in the Giant.</div>';
+      return;
+    }
+
+    box.innerHTML=data.map(x=>{
+      const source=x.source||x.sources||x.provider||'Stored match data';
+      const time=x.time||x.kickoffTime||x.matchTime||'Time not recorded';
+      return `<div class="tmMatch">
+        <div class="tmTeams">${escapeHtml(x.home||x.homeTeam||'Home')} vs ${escapeHtml(x.away||x.awayTeam||'Away')}</div>
+        <div class="tmMeta">${escapeHtml(x.league||x.competition||'Competition not recorded')} • ${escapeHtml(time)}</div>
+        <div class="tmSource">SOURCE: ${escapeHtml(Array.isArray(source)?source.join(' + '):source)}</div>
+      </div>`;
+    }).join('');
+  };
+
+  window.addEventListener('storage',giantRenderTodayV25);
+  document.addEventListener('visibilitychange',()=>{
+    if(!document.hidden) giantRenderTodayV25();
+  });
+
+  giantRenderTodayV25();
+  setInterval(giantRenderTodayV25,60000);
+})();
+</script>
+</section>
+
+<div class="app">
+<header>
+  <div class="brand">
+    <div><h1>⚽ Football Analysis</h1><small>V2.10 Dashboard</small></div>
+    <div class="bankroll"><small>Bankroll</small><b id="bankrollValue">0.00</b></div>
+  </div>
+</header>
+
+<nav class="nav" id="mainNav">
+  <button data-view="dashboard" class="active">Dashboard</button>
+  <button data-view="add">Add Match</button>
+  <button data-view="ocr">OCR</button>
+  <button data-view="predictions">Predictions</button>
+  <button data-view="history">History</button>
+  <button data-view="analysis">Analysis</button>
+  <button data-view="results">Results</button>
+  <button data-view="backup">Backup</button>
+  <button data-view="settings">More</button>
+</nav>
+
+<main>
+<section id="view-dashboard" class="view active">
+  <h2>Dashboard</h2>
+  <div class="grid">
+    <div class="card metric"><b id="dTotal">0</b><span>Total</span></div>
+    <div class="card metric"><b class="good" id="dWon">0</b><span>Won</span></div>
+    <div class="card metric"><b class="bad" id="dLost">0</b><span>Lost</span></div>
+    <div class="card metric"><b class="warn" id="dPending">0</b><span>Pending</span></div>
+  </div>
+  <div class="grid" style="margin-top:10px">
+    <div class="card metric"><b id="dRate">0%</b><span>Win rate</span></div>
+    <div class="card metric"><b id="dProfit">0.00</b><span>Net profit/loss</span></div>
+    <div class="card metric"><b id="dROI">0%</b><span>ROI</span></div>
+    <div class="card metric"><b id="dStaked">0.00</b><span>Total staked</span></div>
+  </div>
+  <h2>Recent Predictions</h2>
+  <div id="recentList"></div>
+</section>
+
+<section id="view-add" class="view">
+  <h2>Add Match</h2>
+  <div class="card">
+    <label>Country / Competition</label><input id="addCountry">
+    <label>League</label><input id="addLeague">
+    <div class="filters">
+      <div><label>Date</label><input id="addDate" placeholder="05 Aug"></div>
+      <div><label>Time</label><input id="addTime" placeholder="16:30"></div>
+      <div><label>Home team</label><input id="addHome"></div>
+      <div><label>Away team</label><input id="addAway"></div>
+      <div><label>Prediction</label>
+        <select id="addPrediction">
+          <option>Home Win</option><option>Draw</option><option>Away Win</option>
+          <option>Over 1.5</option><option>Over 2.5</option>
+          <option>Under 1.5</option><option>Under 2.5</option>
+          <option>Both Teams To Score</option><option>Double Chance 1X</option><option>Double Chance X2</option>
+        </select>
+      </div>
+      <div><label>Odds</label><input id="addOdds" type="number" step="0.01" min="1"></div>
+      <div><label>Stake</label><input id="addStake" type="number" step="0.01" min="0"></div>
+    </div>
+    <button class="btn" onclick="fa210AddMatch()">Save Match</button>
+  </div>
+</section>
+
+<section id="view-ocr" class="view">
+  <h2>📷 Screenshot OCR</h2>
+  <div class="ocr-drop">
+    <b>Read football screenshots</b>
+    <p class="muted">Upload → Read → Review → Save</p>
+    <input id="fa210OcrFile" type="file" accept="image/*">
+    <button class="btn" onclick="fa210ReadScreenshot()">🔎 Read Screenshot</button>
+  </div>
+  <div id="fa210OcrStatus" class="notice">OCR ready.</div>
+  <textarea id="fa210OcrText" placeholder="Extracted OCR text appears here..."></textarea>
+  <button class="btn secondary" onclick="fa210ParseOCR()">⚙️ Analyze OCR Text</button>
+  <button class="btn secondary" onclick="fa210LoadTest()">🧪 Test Parser</button>
+  <div id="fa210Review"></div>
+  <button id="fa210SaveOcr" class="btn" style="display:none" onclick="fa210SaveOCR()">💾 Save All Matches</button>
+</section>
+
+<section id="view-predictions" class="view">
+  <h2>Predictions</h2>
+  <div class="filters">
+    <select id="predFilter" onchange="fa210RenderPredictions()"><option value="ALL">All</option><option>PENDING</option><option>WON</option><option>LOST</option></select>
+    <input id="predSearch" placeholder="Search team..." oninput="fa210RenderPredictions()">
+  </div>
+  <div id="predList"></div>
+</section>
+
+<section id="view-history" class="view">
+  <h2>History</h2>
+  <div class="filters">
+    <select id="histFilter" onchange="fa210RenderHistory()"><option value="ALL">ALL</option><option>PENDING</option><option>WON</option><option>LOST</option></select>
+    <select id="histSort" onchange="fa210RenderHistory()"><option value="new">Newest</option><option value="old">Oldest</option></select>
+  </div>
+  <div id="historyList"></div>
+</section>
+
+<section id="view-analysis" class="view">
+  <h2>Analysis</h2>
+  <div class="grid">
+    <div class="card metric"><b id="aBest">—</b><span>Best prediction type</span></div>
+    <div class="card metric"><b id="aLeague">—</b><span>Best league</span></div>
+    <div class="card metric"><b id="aOdds">—</b><span>Best odds range</span></div>
+    <div class="card metric"><b id="aROI">0%</b><span>Completed ROI</span></div>
+  </div>
+  <h2>Prediction Type Performance</h2>
+  <div id="predictionTable"></div>
+  <h2>League Performance</h2>
+  <div id="leagueTable"></div>
+</section>
+
+<section id="view-results" class="view">
+<h2>🔎 Automatic Results Verification</h2>
+<div class="notice">V2.11 checks completed matches against an external football-results source. Results are used to settle predictions automatically; unresolved matches remain pending.</div>
+<div class="card"><h3>Verification source</h3><p class="muted">Primary source: ESPN public soccer scoreboard data.</p>
+<button class="btn" onclick="fa211VerifyPending()">🔄 Verify Pending Results</button>
+<button class="btn secondary" onclick="fa211VerifyCompleted()">🔍 Re-check Completed</button>
+<div id="fa211Status" class="notice">Ready.</div></div>
+<h2>Verification Queue</h2><div id="fa211Queue"></div>
+</section>
+<section id="view-backup" class="view">
+  <h2>Backup & Data Safety</h2>
+  <div class="notice">🔒 Data-safe migration is enabled. V2.10 scans compatible older Football Analysis localStorage keys and copies detected matches into the new dashboard without deleting the older data.</div>
+  <div class="card">
+    <button class="btn" onclick="fa210Export()">⬇️ Export Data</button>
+    <button class="btn secondary" onclick="document.getElementById('restoreFile').click()">⬆️ Restore Data</button>
+    <input id="restoreFile" type="file" accept=".json" style="display:none" onchange="fa210Restore(event)">
+  </div>
+</section>
+
+<section id="view-settings" class="view">
+  <h2>More</h2>
+  <div class="card">
+    <h3>Data safety</h3>
+    <p class="muted">V2.10 keeps the existing V2.9 match storage and adds presentation only.</p>
+    <button class="btn danger" onclick="fa210ClearAll()">Clear all local matches</button>
+  </div>
+</section>
+</main>
+</div>
+
+<div class="bottom">
+  <div class="bottom-inner">
+    <button onclick="fa210Go('dashboard')"><span>⌂</span>Home</button>
+    <button onclick="fa210Go('add')"><span>＋</span>Add</button>
+    <button onclick="fa210Go('ocr')"><span>📷</span>OCR</button>
+    <button onclick="fa210Go('predictions')"><span>⚽</span>Predictions</button>
+    <button onclick="fa210Go('analysis')"><span>📊</span>Analysis</button><button onclick="fa210Go('results')"><span>🔎</span>Results</button>
+  </div>
+</div>
+
+<!-- Existing V2.9 application logic retained below. -->
+<script>
+window.FA_TESSERACT_READY=false;
+window.faLoadTesseract=function(){
+  return new Promise((resolve,reject)=>{
+    if(window.Tesseract){window.FA_TESSERACT_READY=true;resolve();return;}
+    const urls=[
+      'https://cdn.jsdelivr.net/npm/tesseract.js@7/dist/tesseract.min.js',
+      'https://unpkg.com/tesseract.js@7/dist/tesseract.min.js'
+    ];
+    let i=0;
+    function next(){
+      if(window.Tesseract){window.FA_TESSERACT_READY=true;resolve();return;}
+      if(i>=urls.length){reject(new Error('Tesseract.js could not be loaded. Check internet access.'));return;}
+      const s=document.createElement('script');s.src=urls[i++];
+      s.onload=next;s.onerror=next;document.head.appendChild(s);
+    }
+    next();
+  });
+};
+faLoadTesseract().catch(()=>{});
+</script>
+<script>
+/* Storage-compatible V2.9 core */
+let matches=[];
+const FA_STORAGE_KEY='fa_matches_v2';
+const FA_STORAGE_VERSION='2.9';
+
+function fa210Id(){return 'm_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8)}
+function fa210NormaliseMatch(m){
+  if(!m || typeof m!=='object') return null;
+  const home=m.home??m.homeTeam??m.team1??m.home_team??'';
+  const away=m.away??m.awayTeam??m.team2??m.away_team??'';
+  const prediction=m.prediction??m.pick??m.selection??'';
+  if(!String(home).trim() || !String(away).trim()) return null;
+  return {
+    ...m,
+    id:m.id||m.matchId||fa210Id(),
+    country:m.country??m.competitionCountry??'',
+    league:m.league??m.competition??'',
+    date:m.date??'',
+    time:m.time??'',
+    home:String(home),
+    away:String(away),
+    prediction:String(prediction),
+    odds:m.odds??'',
+    stake:m.stake??'',
+    status:m.status||'PENDING',
+    result:m.result??'',
+    hs:m.hs??m.homeScore??'',
+    as:m.as??m.awayScore??'',
+    created:m.created||m.createdAt||new Date().toISOString()
+  };
+}
+
+function fa210ExtractArrays(value, found){
+  if(!value) return;
+  if(Array.isArray(value)){
+    const arr=value.map(fa210NormaliseMatch).filter(Boolean);
+    if(arr.length) found.push(arr);
+    return;
+  }
+  if(typeof value==='object'){
+    for(const k of Object.keys(value)){
+      if(k.toLowerCase().includes('match') || k.toLowerCase().includes('history') ||
+         k.toLowerCase().includes('prediction') || k.toLowerCase().includes('data')){
+        fa210ExtractArrays(value[k],found);
+      }
+    }
+  }
+}
+
+function fa210Load(){
+  const found=[];
+  try{
+    /* 1. Current V2.10/V2.9 key */
+    const raw=localStorage.getItem(FA_STORAGE_KEY);
+    if(raw){
+      try{ fa210ExtractArrays(JSON.parse(raw),found); }catch(e){}
+    }
+
+    /* 2. Scan legacy Football Analysis storage keys.
+       This prevents the new layout from appearing empty when an older
+       version used a different localStorage key. */
+    for(let i=0;i<localStorage.length;i++){
+      const key=localStorage.key(i);
+      if(!key || key===FA_STORAGE_KEY) continue;
+      const low=key.toLowerCase();
+      if(!(/fa|football|match|prediction|storage|backup/.test(low))) continue;
+      try{
+        const value=JSON.parse(localStorage.getItem(key));
+        fa210ExtractArrays(value,found);
+      }catch(e){}
+    }
+
+    /* 3. Merge and deduplicate without deleting any legacy data. */
+    const merged=[];
+    const seen=new Set();
+    for(const arr of found){
+      for(const m of arr){
+        const identity=String(m.id||'')+'|'+
+          String(m.home).trim().toLowerCase()+'|'+
+          String(m.away).trim().toLowerCase()+'|'+
+          String(m.date).trim().toLowerCase()+'|'+
+          String(m.time).trim().toLowerCase();
+        if(!seen.has(identity)){
+          seen.add(identity);
+          merged.push(m);
+        }
+      }
+    }
+    matches=merged;
+
+    /* Write the merged dataset to the V2.10 key, but NEVER remove
+       or overwrite the legacy keys. */
+    if(matches.length) localStorage.setItem(FA_STORAGE_KEY,JSON.stringify(matches));
+  }catch(e){
+    console.error('V2.10 migration error',e);
+    matches=[];
+  }
+
+  matches.forEach(m=>{
+    if(m.status===undefined)m.status='PENDING';
+    if(m.odds===undefined)m.odds='';
+    if(m.stake===undefined)m.stake='';
+    if(m.result===undefined)m.result='';
+    if(m.hs===undefined)m.hs='';
+    if(m.as===undefined)m.as='';
+  });
+}
+function fa210Save(){localStorage.setItem(FA_STORAGE_KEY,JSON.stringify(matches));}
+function fa210Money(v){const n=Number(v);return Number.isFinite(n)?n:0}
+function fa210Escape(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+function fa210Settlement(pred,hs,as){
+  const h=fa210Money(hs),a=fa210Money(as),t=h+a,p=String(pred||'').toLowerCase();
+  if(p==='home win')return h>a?'WON':'LOST';
+  if(p==='draw')return h===a?'WON':'LOST';
+  if(p==='away win')return a>h?'WON':'LOST';
+  if(p==='over 1.5')return t>1.5?'WON':'LOST';
+  if(p==='over 2.5')return t>2.5?'WON':'LOST';
+  if(p==='under 1.5')return t<1.5?'WON':'LOST';
+  if(p==='under 2.5')return t<2.5?'WON':'LOST';
+  if(p==='both teams to score')return h>0&&a>0?'WON':'LOST';
+  if(p==='double chance 1x')return h>=a?'WON':'LOST';
+  if(p==='double chance x2')return a>=h?'WON':'LOST';
+  return 'PENDING';
+}
+
+function fa210Go(view){
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  const v=document.getElementById('view-'+view);if(v)v.classList.add('active');
+  document.querySelectorAll('#mainNav button').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+  if(view==='dashboard')fa210RenderDashboard();
+  if(view==='predictions')fa210RenderPredictions();
+  if(view==='history')fa210RenderHistory();
+  if(view==='analysis')fa210RenderAnalysis();
+  if(view==='results')fa211RenderQueue();
+}
+
+document.querySelectorAll('#mainNav button').forEach(b=>b.onclick=()=>fa210Go(b.dataset.view));
+
+function fa210AddMatch(){
+  const home=document.getElementById('addHome').value.trim(),away=document.getElementById('addAway').value.trim();
+  if(!home||!away){alert('Enter both teams.');return}
+  matches.push({
+    id:fa210Id(),country:document.getElementById('addCountry').value.trim(),
+    league:document.getElementById('addLeague').value.trim(),date:document.getElementById('addDate').value.trim(),
+    time:document.getElementById('addTime').value.trim(),home,away,
+    prediction:document.getElementById('addPrediction').value,odds:document.getElementById('addOdds').value.trim(),
+    stake:document.getElementById('addStake').value.trim(),status:'PENDING',result:'',hs:'',as:'',
+    created:new Date().toISOString()
+  });
+  fa210Save();fa210RenderAll();alert('Match saved.');
+  ['addHome','addAway','addOdds','addStake'].forEach(id=>document.getElementById(id).value='');
+}
+
+function fa210OpenScore(id){
+  const m=matches.find(x=>x.id===id);if(!m)return;
+  const hs=prompt('Final home score for '+m.home+' (e.g. 2):',m.hs||'');
+  if(hs===null)return;
+  const as=prompt('Final away score for '+m.away+' (e.g. 1):',m.as||'');
+  if(as===null)return;
+  if(hs===''||as===''||Number(hs)<0||Number(as)<0){alert('Enter valid scores.');return}
+  m.hs=String(Math.trunc(Number(hs)));m.as=String(Math.trunc(Number(as)));
+  m.result=m.hs+'-'+m.as;m.status=fa210Settlement(m.prediction,m.hs,m.as);m.settledAt=new Date().toISOString();
+  fa210Save();fa210RenderAll();
+}
+
+function fa210MatchCard(m){
+  const status=m.status||'PENDING';
+  const location=[m.country,m.league].filter(Boolean).join(' • ');
+  const dt=[m.date,m.time].filter(Boolean).join(' • ');
+  const financial=(m.odds?'<span class="odds">Odds '+fa210Escape(m.odds)+'</span>':'')+
+                  (m.stake?'<span class="muted">Stake '+fa210Escape(m.stake)+'</span>':'');
+  return `<div class="match">
+    <div class="match-top"><div><div class="teams">${fa210Escape(m.home)} <span class="muted">vs</span> ${fa210Escape(m.away)}</div>
+    <div class="meta">${fa210Escape(location)}${location&&dt?' • ':''}${fa210Escape(dt)}</div></div>
+    <span class="status ${status}">${status}</span></div>
+    <div class="pred"><strong>${fa210Escape(m.prediction||'—')}</strong><div>${financial}</div></div>
+    ${m.result?'<div class="meta">Final score: '+fa210Escape(m.result)+'</div>':''}
+    <div class="actions">${status==='PENDING'?'<button class="btn" onclick="fa210OpenScore(\''+fa210Escape(m.id)+'\')">⚽ Enter Score</button>':''}
+    <button class="btn secondary" onclick="fa210Delete(\''+fa210Escape(m.id)+'\')">Delete</button></div>
+  </div>`;
+}
+
+function fa210Delete(id){
+  if(!confirm('Delete this match?'))return;
+  matches=matches.filter(m=>m.id!==id);fa210Save();fa210RenderAll();
+}
+
+function fa210RenderDashboard(){
+  const total=matches.length,won=matches.filter(m=>m.status==='WON').length,lost=matches.filter(m=>m.status==='LOST').length,pending=matches.filter(m=>m.status==='PENDING').length;
+  const completed=won+lost;
+  let staked=0,returns=0;
+  matches.forEach(m=>{const s=fa210Money(m.stake);staked+=s;if(m.status==='WON')returns+=s*fa210Money(m.odds)});
+  const profit=returns-staked,rate=completed?won/completed*100:0,roi=staked?profit/staked*100:0;
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
+  set('dTotal',total);set('dWon',won);set('dLost',lost);set('dPending',pending);set('dRate',rate.toFixed(2)+'%');
+  set('dProfit',profit.toFixed(2));set('dROI',roi.toFixed(2)+'%');set('dStaked',staked.toFixed(2));
+  set('bankrollValue',profit.toFixed(2));
+  const recent=[...matches].reverse().slice(0,5);
+  document.getElementById('recentList').innerHTML=recent.length?recent.map(fa210MatchCard).join(''):'<div class="empty">No predictions yet.</div>';
+}
+
+function fa210RenderPredictions(){
+  const filter=document.getElementById('predFilter').value,search=document.getElementById('predSearch').value.toLowerCase();
+  const arr=matches.filter(m=>(filter==='ALL'||m.status===filter)&&(!search||(m.home+' '+m.away).toLowerCase().includes(search)));
+  document.getElementById('predList').innerHTML=arr.length?arr.map(fa210MatchCard).join(''):'<div class="empty">No matching predictions.</div>';
+}
+
+function fa210RenderHistory(){
+  const filter=document.getElementById('histFilter').value,sort=document.getElementById('histSort').value;
+  const arr=matches.filter(m=>filter==='ALL'||m.status===filter).sort((a,b)=>(sort==='new'?-1:1)*String(a.created||'').localeCompare(String(b.created||'')));
+  document.getElementById('historyList').innerHTML=arr.length?arr.map(fa210MatchCard).join(''):'<div class="empty">No history yet.</div>';
+}
+
+function fa210Group(arr,key){
+  const map={};
+  arr.forEach(m=>{const k=m[key]||'Unknown';(map[k]||(map[k]=[])).push(m)});return map;
+}
+function fa210Perf(arr){
+  const c=arr.filter(m=>m.status==='WON'||m.status==='LOST'),w=c.filter(m=>m.status==='WON').length;
+  let st=0,ret=0;c.forEach(m=>{const s=fa210Money(m.stake);st+=s;if(m.status==='WON')ret+=s*fa210Money(m.odds)});
+  return {n:c.length,w,rate:c.length?w/c.length*100:0,profit:ret-st,roi:st?(ret-st)/st*100:0};
+}
+function fa210Table(groups){
+  const rows=Object.entries(groups).map(([k,a])=>({k,p:fa210Perf(a)})).sort((x,y)=>y.p.rate-x.p.rate);
+  if(!rows.length)return '<div class="empty">Not enough completed results.</div>';
+  return `<table class="table"><tr><th>Group</th><th>Done</th><th>Won</th><th>Win rate</th><th>P/L</th><th>ROI</th></tr>`+
+    rows.map(r=>`<tr><td>${fa210Escape(r.k)}</td><td>${r.p.n}</td><td>${r.p.w}</td><td>${r.p.rate.toFixed(1)}%</td><td>${r.p.profit.toFixed(2)}</td><td>${r.p.roi.toFixed(1)}%</td></tr>`).join('')+'</table>';
+}
+function fa210RenderAnalysis(){
+  const completed=matches.filter(m=>m.status==='WON'||m.status==='LOST');
+  const pg=fa210Group(completed,'prediction'),lg=fa210Group(completed,'league');
+  const entries=Object.entries(pg).map(([k,a])=>[k,fa210Perf(a)]).sort((a,b)=>b[1].rate-a[1].rate);
+  const le=Object.entries(lg).map(([k,a])=>[k,fa210Perf(a)]).sort((a,b)=>b[1].rate-a[1].rate);
+  document.getElementById('aBest').textContent=entries[0]?entries[0][0]:'—';
+  document.getElementById('aLeague').textContent=le[0]?le[0][0]:'—';
+  const all=fa210Perf(completed);document.getElementById('aROI').textContent=all.roi.toFixed(2)+'%';
+  document.getElementById('aOdds').textContent=completed.length?'Recorded':'—';
+  document.getElementById('predictionTable').innerHTML=fa210Table(pg);
+  document.getElementById('leagueTable').innerHTML=fa210Table(lg);
+}
+
+function fa210RenderAll(){fa210RenderDashboard();fa210RenderPredictions();fa210RenderHistory();fa210RenderAnalysis()}
+
+/* OCR compatibility layer: the V2.9 parser can be used without changing the storage. */
+let fa210Reviewed=[];
+function fa210Prediction(s){
+  s=String(s||'').toLowerCase();
+  if(s.includes('over 2.5'))return'Over 2.5';if(s.includes('under 2.5'))return'Under 2.5';
+  if(s.includes('over 1.5'))return'Over 1.5';if(s.includes('under 1.5'))return'Under 1.5';
+  if(s.includes('both teams')&&s.includes('score'))return'Both Teams To Score';
+  if(s.includes('double chance')&&(s.includes('home/draw')||s.includes('1x')))return'Double Chance 1X';
+  if(s.includes('double chance')&&(s.includes('draw/away')||s.includes('x2')))return'Double Chance X2';
+  if(/away\s+win/i.test(s))return'Away Win';if(/home\s+win/i.test(s))return'Home Win';if(/\bdraw\b/i.test(s))return'Draw';return'';
+}
+function fa210CleanTeam(s){return String(s||'').replace(/^[0Oo©®●•\]\[(){}|]+\s*/,'').replace(/\s+/g,' ').trim()}
+function fa210LooksTeam(s){
+  s=fa210CleanTeam(s);if(!s||fa210Prediction(s))return false;
+  if(/^(\d{1,2}:\d{2})$/.test(s))return false;
+  if(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b/i.test(s))return false;
+  const letters=(s.match(/[A-Za-zÀ-ÖØ-öø-ÿ]/g)||[]).length;
+  const allowed=(s.match(/[A-Za-zÀ-ÖØ-öø-ÿ0-9\s.'’&-]/g)||[]).length;
+  return letters>=2&&allowed/Math.max(1,s.length)>=.85&&s.split(/\s+/).length<=6;
+}
+function fa210Odds(s){const m=String(s||'').match(/\b(?:[1-9]\d?|1)\.\d{2}\b/);return m?m[0]:''}
+function fa210Parse(text){
+  const lines=String(text||'').replace(/\u00a0/g,' ').split(/\r?\n/).map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
+  const out=[];let country='',league='',date='',time='';
+  for(let i=0;i<lines.length;i++){
+    const line=lines[i];
+    const comp=line.match(/^World\s*-\s*UEFA\s+(.+)/i);
+    if(comp){country='World';league=comp[1].replace(/\bLeague\b/i,'').trim()+' League';}
+    if(/^(Finland|Italy|Turkey|Poland|England|Armenia)\s*-/i.test(line)){country=line.split('-')[0].trim();league=line.split('-').slice(1).join('-').trim().replace(/\s+\d{1,2}\s+Aug.*$/i,'').trim()}
+    const dm=line.match(/\b(\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*)/i);if(dm)date=dm[1];
+    const tm=line.match(/\b(?:[01]?\d|2[0-3])[:.][0-5]\d\b/);if(tm)time=tm[0].replace('.',':');
+    if(!fa210LooksTeam(line))continue;
+    const next=lines[i+1]||'';if(!fa210LooksTeam(next))continue;
+    let pred='',odds='';
+    for(let j=i+2;j<Math.min(i+7,lines.length);j++){pred=fa210Prediction(lines[j])||pred;odds=fa210Odds(lines[j])||odds;if(pred)break}
+    if(pred){
+      const home=fa210CleanTeam(line),away=fa210CleanTeam(next);
+      const key=(home+'|'+away+'|'+date+'|'+time).toLowerCase();
+      if(!out.some(m=>m.key===key))out.push({key,country,league,date,time,home,away,prediction:pred,odds,status:'PENDING',result:'',hs:'',as:'',stake:''});
+    }
+  }
+  return out.map(({key,...m})=>m);
+}
+function fa210RenderReview(){
+  const box=document.getElementById('fa210Review');
+  if(!fa210Reviewed.length){box.innerHTML='<div class="empty">No complete matches detected.</div>';document.getElementById('fa210SaveOcr').style.display='none';return}
+  box.innerHTML=fa210Reviewed.map((m,i)=>`<div class="review-row">
+    <b>Match ${i+1}</b>
+    <div class="twocol"><div><label>Home</label><input data-i="${i}" data-k="home" value="${fa210Escape(m.home)}"></div><div><label>Away</label><input data-i="${i}" data-k="away" value="${fa210Escape(m.away)}"></div></div>
+    <div class="twocol"><div><label>Country/Competition</label><input data-i="${i}" data-k="country" value="${fa210Escape(m.country)}"></div><div><label>League</label><input data-i="${i}" data-k="league" value="${fa210Escape(m.league)}"></div></div>
+    <div class="twocol"><div><label>Date</label><input data-i="${i}" data-k="date" value="${fa210Escape(m.date)}"></div><div><label>Time</label><input data-i="${i}" data-k="time" value="${fa210Escape(m.time)}"></div></div>
+    <div class="twocol"><div><label>Prediction</label><input data-i="${i}" data-k="prediction" value="${fa210Escape(m.prediction)}"></div><div><label>Odds</label><input data-i="${i}" data-k="odds" value="${fa210Escape(m.odds)}"></div></div>
+  </div>`).join('');
+  box.querySelectorAll('input').forEach(el=>el.oninput=()=>{fa210Reviewed[Number(el.dataset.i)][el.dataset.k]=el.value});
+  document.getElementById('fa210SaveOcr').style.display='block';
+}
+async function fa210ReadScreenshot(){
+  const f=document.getElementById('fa210OcrFile').files[0],st=document.getElementById('fa210OcrStatus');
+  if(!f){alert('Choose a screenshot first.');return}
+  try{
+    await faLoadTesseract();if(!window.Tesseract)throw Error('OCR engine unavailable');
+    st.textContent='⏳ Reading screenshot...';
+    const r=await Tesseract.recognize(f,'eng',{logger:m=>{if(m.status&&m.progress!=null)st.textContent='⏳ '+m.status+' '+Math.round(m.progress*100)+'%'}});
+    document.getElementById('fa210OcrText').value=r.data.text||'';st.textContent='✅ OCR complete. Review the detected matches.';
+    fa210ParseOCR();
+  }catch(e){st.textContent='❌ OCR failed: '+e.message}
+}
+function fa210ParseOCR(){fa210Reviewed=fa210Parse(document.getElementById('fa210OcrText').value);fa210RenderReview()}
+function fa210LoadTest(){
+  document.getElementById('fa210OcrText').value=`Finland - Ykkénen 05 Aug + 16:30
+0 Tampere United
+0 KPV-j
+Goals Over/Under - Over 2.5 1.20 @
+World - UEFA Europa Conference
+05 Aug - 18:00
+League
+0 Brann
+0 Apollon Limassol
+Goals Over/Under - Over 1.5 1.22 @
+World - UEFA Europa Conference
+05 Aug - 19:30
+League
+0 Panathinaikos
+0 CSKA 1948
+Match Winner - Home 1.18 @`;
+  fa210ParseOCR();
+}
+function fa210SaveOCR(){
+  fa210Reviewed.forEach(m=>matches.push({...m,id:fa210Id(),created:new Date().toISOString()}));
+  fa210Save();fa210Reviewed=[];fa210RenderReview();fa210RenderAll();alert('OCR matches saved.');
+}
+
+
+/* V2.20 NEUTRAL FOOTBALL RESULTS TRACKER */
+const FA213_RESULT_SOURCES = [
+  { id:'source_a', name:'Result Source A' },
+  { id:'source_b', name:'Result Source B' },
+  { id:'source_c', name:'Result Source C' }
+];
+
+function fa213NormalizeTeam(s){
+  return String(s||'').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/\b(fc|sc|afc|cf|fk|bk|sk|club)\b/g,' ')
+    .replace(/[^a-z0-9]+/g,' ').trim();
+}
+
+function fa213Similarity(a,b){
+  const A=new Set(fa213NormalizeTeam(a).split(/\s+/).filter(Boolean));
+  const B=new Set(fa213NormalizeTeam(b).split(/\s+/).filter(Boolean));
+  if(!A.size||!B.size)return 0;
+  let hit=0; A.forEach(x=>{if(B.has(x))hit++});
+  return hit/Math.max(A.size,B.size);
+}
+
+/* Result records are neutral football data: fixture, score, status and source. */
+function fa213AttachResult(match, result){
+  if(!match || !result)return false;
+  match.resultVerificationStatus = result.status || 'UNVERIFIED';
+  match.resultSource = result.source || '';
+  match.resultVerifiedAt = result.verifiedAt || new Date().toISOString();
+
+  if(result.status === 'FINISHED' &&
+     result.homeScore !== undefined &&
+     result.awayScore !== undefined){
+    match.hs = String(result.homeScore);
+    match.as = String(result.awayScore);
+    match.result = match.hs + '-' + match.as;
+    return true;
+  }
+  return false;
+}
+
+function fa213ResultStatus(match){
+  return match.resultVerificationStatus || 'WAITING';
+}
+
+function fa213RenderResultStatus(match){
+  const s=fa213ResultStatus(match);
+  if(s==='FINISHED')return '🟢 Finished';
+  if(s==='NOT_FINISHED')return '🟡 Not finished';
+  if(s==='NOT_FOUND')return '🔴 Fixture not found';
+  if(s==='SOURCE_UNAVAILABLE')return '🔴 Source unavailable';
+  if(s==='CONFLICT')return '🟠 Sources disagree';
+  return '⏳ Waiting for result';
+}
+
+/*
+ * Import neutral result data from a JSON file.
+ * Expected shape:
+ * [
+ *   {home:"Team A",away:"Team B",date:"2026-08-16",
+ *    homeScore:3,awayScore:0,status:"FINISHED",source:"Source A"}
+ * ]
+ */
+function fa213ImportResults(records){
+  if(!Array.isArray(records))return {matched:0,unmatched:0};
+  let matched=0,unmatched=0;
+
+  for(const r of records){
+    let best=null;
+    for(const m of matches){
+      const direct=fa213Similarity(m.home,r.home)+fa213Similarity(m.away,r.away);
+      const reverse=fa213Similarity(m.home,r.away)+fa213Similarity(m.away,r.home);
+      const score=Math.max(direct,reverse);
+      if(!best||score>best.score)best={m,score};
+    }
+
+    if(best && best.score>=1.5){
+      fa213AttachResult(best.m,r);
+      best.m.resultMatchConfidence=Math.round(best.score/2*100);
+      matched++;
+    }else{
+      unmatched++;
+    }
+  }
+
+  if(typeof fa210Save==='function')fa210Save();
+  if(typeof fa210RenderAll==='function')fa210RenderAll();
+  return {matched,unmatched};
+}
+
+function fa213ExportResults(){
+  const data=matches.map(m=>({
+    home:m.home||'',away:m.away||'',date:m.date||'',time:m.time||'',
+    country:m.country||'',league:m.league||'',
+    homeScore:m.hs||'',awayScore:m.as||'',
+    score:m.result||'',
+    status:m.resultVerificationStatus||'WAITING',
+    source:m.resultSource||'',
+    verifiedAt:m.resultVerifiedAt||''
+  }));
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='football_results_export.json';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+/* END V2.16 NEUTRAL FOOTBALL RESULTS TRACKER */
+
+/* Backup */
+function fa210Export(){
+  const payload={app:'Football Analysis',version:'2.10',exportedAt:new Date().toISOString(),matches};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='football_analysis_v2_10_backup.json';a.click();URL.revokeObjectURL(a.href);
+}
+function fa210Restore(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{
+    const p=JSON.parse(r.result),arr=Array.isArray(p)?p:p.matches;
+    if(!Array.isArray(arr))throw Error('No matches found');
+    if(!confirm('Restore '+arr.length+' matches? This replaces current local matches.'))return;
+    matches=arr;fa210Save();fa210RenderAll();alert('Restore complete.');
+  }catch(err){alert('Restore failed: '+err.message)}};
+  r.readAsText(f);
+}
+function fa210ClearAll(){
+  if(!confirm('This permanently clears local matches. Continue?'))return;
+  matches=[];fa210Save();fa210RenderAll();
+}
+
+fa210Load();
+fa210RenderAll();
+</script>
+
+<section id="fa214ChromeQueue" style="margin-top:20px">
+<div class="card">
+<h2>🌐 Chrome Verification Queue</h2>
+<p class="muted">Open a pending fixture in Chrome, verify the football result, then record its final score.</p>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">
+<button type="button" onclick="fa214OpenAll()">Open All Pending</button>
+<button type="button" onclick="fa214RenderQueue()">Refresh Queue</button>
+</div>
+<div id="fa214QueueStatus" class="meta">Ready.</div>
+<div id="fa214Queue"></div>
+</div>
+</section>
+<script>
+(function(){
+function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c])}
+window.fa214SearchUrl=function(m){return 'https://www.google.com/search?q='+encodeURIComponent([m.home,m.away,m.date,m.league,'football result'].filter(Boolean).join(' '))};
+window.fa214Open=function(i){const m=matches[i];if(m)window.open(fa214SearchUrl(m),'_blank')};
+window.fa214OpenAll=function(){const a=matches.map((m,i)=>({m,i})).filter(x=>x.m.status==='PENDING');a.forEach((x,n)=>setTimeout(()=>fa214Open(x.i),n*600));const e=document.getElementById('fa214QueueStatus');if(e)e.textContent=a.length?'Opened '+a.length+' pending fixture searches in Chrome.':'No pending matches.'};
+window.fa214SaveResult=function(i){
+const m=matches[i];if(!m)return;
+const hs=prompt('Final HOME score for '+m.home+':',m.hs||'');if(hs===null)return;
+const as=prompt('Final AWAY score for '+m.away+':',m.as||'');if(as===null)return;
+if(!/^\d+$/.test(hs)||!/^\d+$/.test(as)){alert('Enter whole-number final scores.');return}
+m.hs=String(Number(hs));m.as=String(Number(as));m.result=m.hs+'-'+m.as;
+m.resultVerificationStatus='FINISHED';m.resultSource='Chrome manual verification';m.resultVerifiedAt=new Date().toISOString();
+if(typeof fa210Save==='function')fa210Save();if(typeof fa210RenderAll==='function')fa210RenderAll();fa214RenderQueue();
+};
+window.fa214RenderQueue=function(){
+const box=document.getElementById('fa214Queue');if(!box)return;
+const a=matches.map((m,i)=>({m,i})).filter(x=>x.m.status==='PENDING');
+if(!a.length){box.innerHTML='<div class="empty">No pending matches.</div>';return}
+box.innerHTML=a.map(x=>{const m=x.m;return '<div class="match" style="margin-top:10px;padding:12px;border:1px solid #ddd;border-radius:10px"><div class="teams"><strong>Match '+(x.i+1)+'</strong> — '+esc(m.home)+' <span class="muted">vs</span> '+esc(m.away)+'</div><div class="meta">'+esc([m.country,m.league,m.date,m.time].filter(Boolean).join(' • '))+'</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button type="button" onclick="fa214Open('+x.i+')">🌐 Verify in Chrome</button><button type="button" onclick="fa214SaveResult('+x.i+')">✓ Record Final Score</button></div><div class="meta" style="margin-top:6px">Status: '+esc(m.resultVerificationStatus||'WAITING')+'</div></div>'}).join('')
+};
+document.addEventListener('DOMContentLoaded',()=>setTimeout(fa214RenderQueue,100));
+})();
+</script>
+
+
+<section id="fa215Elite" style="margin-top:24px">
+<style>
+#fa215Elite{font-family:Arial,sans-serif}
+.fa215-card{background:#fff;border-radius:16px;box-shadow:0 8px 28px rgba(0,0,0,.12);overflow:hidden;border:1px solid #e6e6e6}
+.fa215-head{background:linear-gradient(135deg,#0b6b2f,#159447);color:#fff;padding:22px 18px;text-align:center}
+.fa215-head h2{margin:0 0 7px;font-size:26px}.fa215-head p{margin:0}
+.fa215-badge{display:inline-block;margin-top:12px;padding:7px 14px;border-radius:999px;background:rgba(255,255,255,.16);font-weight:700}
+.fa215-table-wrap{overflow-x:auto}.fa215-table{width:100%;border-collapse:collapse;min-width:620px}
+.fa215-table th{background:#dff2fa;color:#24313a;text-align:left;padding:13px 12px;font-size:14px}
+.fa215-table td{padding:14px 12px;border-bottom:1px solid #e5e5e5;vertical-align:top}
+.fa215-table tr:nth-child(even){background:#fafafa}.fa215-time{font-weight:700;white-space:nowrap}
+.fa215-match,.fa215-analysis,.fa215-status{font-weight:700}.fa215-status{white-space:nowrap}
+.fa215-pending{color:#9a6b00}.fa215-won{color:#14833b}.fa215-lost{color:#c62828}
+.fa215-foot{padding:16px}.fa215-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+.fa215-stat{background:#f5f7fa;border-radius:12px;padding:12px;text-align:center}.fa215-stat strong{display:block;font-size:20px}.fa215-stat span{font-size:12px;color:#667}
+.fa215-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.fa215-actions button{border:0;border-radius:10px;padding:12px 16px;font-weight:700}
+.fa215-primary{background:#159447;color:#fff}.fa215-secondary{background:#e9eef3;color:#24313a}.fa215-empty{padding:22px;text-align:center;color:#667}
+@media(max-width:600px){.fa215-stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+<div class="fa215-card">
+<div class="fa215-head"><h2>👑 ELITE DAILY ANALYSIS</h2><p id="fa215Date">Today's Football Analysis</p><div class="fa215-badge">DAILY EDITION</div></div>
+<div id="fa215Table"></div>
+<div class="fa215-foot">
+<h3 style="margin:0">📊 Daily Performance</h3>
+<div class="fa215-stats">
+<div class="fa215-stat"><strong id="fa215Total">0</strong><span>Analysed</span></div>
+<div class="fa215-stat"><strong id="fa215Done">0</strong><span>Completed</span></div>
+<div class="fa215-stat"><strong id="fa215Correct">0</strong><span>Correct</span></div>
+<div class="fa215-stat"><strong id="fa215Pending">0</strong><span>Pending</span></div>
+</div>
+<div class="fa215-actions">
+<button class="fa215-primary" type="button" onclick="fa215Share()">📤 Share Today's Analysis</button>
+<button class="fa215-secondary" type="button" onclick="fa215Render()">🔄 Refresh Elite</button>
+</div>
+<div id="fa215ShareStatus" style="margin-top:10px;color:#667"></div>
+</div></div>
+<script>
+(function(){
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c])}
+function dateLabel(){return new Date().toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric'})}
+function sameCalendarDay(value){
+ if(!value)return false;
+ const s=String(value).trim(),d=new Date();
+ const key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+ let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+ if(m)return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`===key;
+ m=s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
+ if(m)return `${m[3]}-${String(m[2]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`===key;
+ const p=new Date(s);
+ return !Number.isNaN(p.getTime())&&p.getFullYear()===d.getFullYear()&&p.getMonth()===d.getMonth()&&p.getDate()===d.getDate();
+}
+function isToday(m){return sameCalendarDay(m && (m.date||m.matchDate||m.kickoffDate||m.fixtureDate||m.kickoff||m.datetime||m.matchDateTime))}
+}
+function analysis(m){return m.prediction||m.tip||m.analysis||'Analysis not entered'}
+function status(m){return (m.resultVerificationStatus==='FINISHED'||m.status==='WON'||m.status==='LOST')?'COMPLETED':'PENDING'}
+window.fa215Render=function(){
+ const list=(typeof matches!=='undefined'?matches:[]).filter(isToday),box=document.getElementById('fa215Table');
+ document.getElementById('fa215Date').textContent=dateLabel();
+ let done=0,correct=0;
+ list.forEach(m=>{if(status(m)==='COMPLETED')done++;if(m.status==='WON')correct++});
+ document.getElementById('fa215Total').textContent=list.length;
+ document.getElementById('fa215Done').textContent=done;
+ document.getElementById('fa215Correct').textContent=correct;
+ document.getElementById('fa215Pending').textContent=list.length-done;
+ if(!list.length){box.innerHTML='<div class="fa215-empty">No matches for today yet. Add a match and it will appear here automatically.</div>';return}
+ box.innerHTML='<div class="fa215-table-wrap"><table class="fa215-table"><thead><tr><th>TIME</th><th>MATCH</th><th>ANALYSIS</th><th>STATUS</th></tr></thead><tbody>'+
+ list.map(m=>{let st=status(m),cl=st==='COMPLETED'?(m.status==='WON'?'fa215-won':'fa215-lost'):'fa215-pending';
+ return '<tr><td class="fa215-time">'+esc(m.time||'—')+'</td><td><div class="fa215-match">'+esc((m.home||'Home')+' vs '+(m.away||'Away'))+'</div><div style="font-size:12px;color:#667">'+esc([m.country,m.league,m.date].filter(Boolean).join(' • '))+'</div></td><td class="fa215-analysis">'+esc(analysis(m))+(m.odds?' <span style="font-weight:400">('+esc(m.odds)+')</span>':'')+'</td><td class="fa215-status '+cl+'">'+esc(st)+'</td></tr>'}).join('')+'</tbody></table></div>'
+};
+window.fa215Share=async function(){
+ const list=(typeof matches!=='undefined'?matches:[]).filter(isToday),lines=['👑 ELITE DAILY FOOTBALL ANALYSIS','',dateLabel(),''];
+ list.forEach((m,i)=>lines.push((i+1)+'. '+(m.time||'—')+' | '+(m.home||'Home')+' vs '+(m.away||'Away')+' | '+analysis(m)));
+ lines.push('','Results are updated as matches are verified.');
+ const text=lines.join('\n');
+ try{if(navigator.share)await navigator.share({title:'Elite Daily Football Analysis',text});
+ else if(navigator.clipboard){await navigator.clipboard.writeText(text);document.getElementById('fa215ShareStatus').textContent='Analysis copied. Paste it into WhatsApp or another app to share.'}
+ else document.getElementById('fa215ShareStatus').textContent=text}catch(e){}
+};
+document.addEventListener('DOMContentLoaded',()=>setTimeout(fa215Render,150));
+})();
+</script>
+</section>
+
+
+<!-- V2.16 ELITE DASHBOARD -->
+<section id="fa216EliteDashboard" style="margin-top:24px">
+<style>
+#fa216EliteDashboard{font-family:Arial,sans-serif;color:#18212a}
+#fa216EliteDashboard .fa216-wrap{background:#f3f5f7;border-radius:18px;padding:16px;border:1px solid #c9d0d7}
+#fa216EliteDashboard .fa216-title{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+#fa216EliteDashboard .fa216-title h2{margin:0;font-size:25px;color:#111820;font-weight:800}
+#fa216EliteDashboard .fa216-sub{color:#33404b;font-size:13px;font-weight:600}
+#fa216EliteDashboard .fa216-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+#fa216EliteDashboard .fa216-stat{background:#fff;border:1px solid #c9d0d7;border-radius:14px;padding:14px;text-align:center}
+#fa216EliteDashboard .fa216-stat b{display:block;font-size:23px;color:#111820;font-weight:800}
+#fa216EliteDashboard .fa216-stat span{font-size:12px;color:#25313b;font-weight:800}
+#fa216EliteDashboard .fa216-panel{background:#fff;border:1px solid #c9d0d7;border-radius:16px;margin-top:14px;overflow:hidden}
+#fa216EliteDashboard .fa216-panel h3{margin:0;padding:14px 16px;border-bottom:2px solid #d5dbe0;color:#111820;font-size:17px;font-weight:800}
+#fa216EliteDashboard .fa216-row{display:grid;grid-template-columns:1fr auto;gap:12px;padding:15px 16px;border-bottom:1px solid #dfe3e7}
+#fa216EliteDashboard .fa216-row:last-child{border-bottom:0}
+#fa216EliteDashboard .fa216-match{font-weight:800;color:#111820;font-size:15px}
+#fa216EliteDashboard .fa216-meta{font-size:12px;color:#33404b;margin-top:5px;font-weight:600}
+#fa216EliteDashboard .fa216-meta strong{color:#111820;font-weight:800}
+#fa216EliteDashboard .fa216-pill{align-self:center;border-radius:999px;padding:8px 11px;font-size:12px;font-weight:800;background:#e1e6eb;color:#18212a;border:1px solid #c5ccd3}
+#fa216EliteDashboard .fa216-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+#fa216EliteDashboard .fa216-actions button{border:0;border-radius:10px;padding:12px 15px;font-weight:800;cursor:pointer}
+#fa216EliteDashboard .fa216-share{background:#087f3f;color:#fff}
+#fa216EliteDashboard .fa216-neutral{background:#25313b;color:#fff}
+#fa216EliteDashboard .fa216-empty{padding:20px;color:#33404b;text-align:center;font-weight:700}
+@media(max-width:700px){#fa216EliteDashboard .fa216-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+<div class="fa216-wrap">
+<div class="fa216-title">
+<div><h2>👑 ELITE DASHBOARD</h2><div class="fa216-sub">Daily football analysis & results</div></div>
+<div class="fa216-sub" id="fa216Date"></div>
+</div>
+<div class="fa216-grid">
+<div class="fa216-stat"><b id="fa216Total">0</b><span>TODAY</span></div>
+<div class="fa216-stat"><b id="fa216Completed">0</b><span>COMPLETED</span></div>
+<div class="fa216-stat"><b id="fa216Correct">0</b><span>CORRECT</span></div>
+<div class="fa216-stat"><b id="fa216Accuracy">—</b><span>ACCURACY</span></div>
+</div>
+<div class="fa216-panel"><h3>🔥 Today's Elite Analysis</h3><div id="fa216Today"></div></div>
+<div class="fa216-panel"><h3>📚 Recent Analysis</h3><div id="fa216Recent"></div></div>
+<div class="fa216-actions">
+<button class="fa216-share" onclick="fa216Share()">📤 Share Elite Analysis</button>
+<button class="fa216-neutral" onclick="fa216Render()">🔄 Refresh</button>
+</div>
+<div id="fa216Message" class="fa216-sub" style="margin-top:9px"></div>
+</div>
+<script>
+(function(){
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c])}
+function arr(){return typeof matches!=='undefined'?matches:[]}
+function label(m){return [m.country,m.league,m.date,m.time].filter(Boolean).join(' • ')}
+function completed(m){return m.resultVerificationStatus==='FINISHED'||m.status==='WON'||m.status==='LOST'}
+function today(m){return sameCalendarDay(m.date)}).toLowerCase())||
+ s.includes(d.toLocaleString(undefined,{month:'long'}).toLowerCase())
+}
+function analysis(m){return m.prediction||m.analysis||m.tip||'Analysis not entered'}
+function row(m){
+ const st=completed(m)?(m.status==='WON'?'Correct':'Completed'):'Pending';
+ return '<div class="fa216-row"><div><div class="fa216-match">'+esc((m.home||'Home')+' vs '+(m.away||'Away'))+
+ '</div><div class="fa216-meta">'+esc(label(m))+'</div><div class="fa216-meta">Analysis: <strong>'+
+ esc(analysis(m))+'</strong>'+(m.odds?' • Odds: '+esc(m.odds):'')+'</div></div><div class="fa216-pill">'+esc(st)+'</div></div>';
+}
+window.fa216Render=function(){
+ const all=arr(),t=all.filter(today),done=all.filter(completed),correct=all.filter(m=>m.status==='WON');
+ document.getElementById('fa216Date').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric',year:'numeric'});
+ document.getElementById('fa216Total').textContent=t.length;
+ document.getElementById('fa216Completed').textContent=t.filter(completed).length;
+ document.getElementById('fa216Correct').textContent=correct.length;
+ document.getElementById('fa216Accuracy').textContent=done.length?Math.round(correct.length/done.length*100)+'%':'—';
+ document.getElementById('fa216Today').innerHTML=t.length?t.map(row).join(''):'<div class="fa216-empty">No analysis for today yet.</div>';
+ document.getElementById('fa216Recent').innerHTML=all.length?all.slice(-10).reverse().map(row).join(''):'<div class="fa216-empty">No history yet.</div>';
+};
+window.fa216Share=async function(){
+ const t=arr().filter(today);
+ const text=['👑 ELITE DAILY FOOTBALL ANALYSIS','',...t.map((m,i)=>
+ (i+1)+'. '+(m.home||'Home')+' vs '+(m.away||'Away')+' | '+analysis(m)+' | '+(m.resultVerificationStatus||'PENDING'))].join('\n');
+ try{
+   if(navigator.share) await navigator.share({title:'Elite Daily Football Analysis',text});
+   else if(navigator.clipboard){
+     await navigator.clipboard.writeText(text);
+     document.getElementById('fa216Message').textContent='Copied. You can now share it with your friends.';
+   } else document.getElementById('fa216Message').textContent=text;
+ }catch(e){}
+};
+document.addEventListener('DOMContentLoaded',()=>setTimeout(fa216Render,200));
+})();
+</script>
+</section>
+<!-- END V2.16 ELITE DASHBOARD -->
+
+
+<!-- V1.1 ONE-TAP PUBLISH TO MINI -->
+<section id="faMiniPublish" style="margin-top:18px">
+<style>
+#faMiniPublish .pbox{background:#fff;border:2px solid #0b7f3f;border-radius:15px;padding:16px}
+#faMiniPublish h3{margin:0 0 6px;color:#101820}
+#faMiniPublish p{margin:0 0 12px;color:#25313b;font-weight:600;font-size:13px}
+#faMiniPublish button{border:0;border-radius:11px;padding:13px 16px;font-weight:900;background:#087f3f;color:#fff}
+#faMiniPublish .msg{margin-top:10px;font-size:12px;font-weight:800;color:#25313b}
+</style>
+<div class="pbox">
+<h3>📤 Publish Clean Data to Elite Mini</h3>
+<p>Publish the current approved matches to the Mini. The Giant remains the master application.</p>
+<button type="button" onclick="faPublishCleanToMini()">PUBLISH TO MINI</button>
+<div id="faMiniPublishMsg" class="msg"></div>
+</div>
+<script>
+function faPublishCleanToMini(){
+ try{
+   const source=(typeof matches!=='undefined'?matches:[]);
+   const clean=source.map((m,i)=>({
+     id:m.id||m.matchId||('fa-'+Date.now()+'-'+i),
+     date:m.date||'',time:m.time||'',country:m.country||'',league:m.league||'',
+     home:m.home||'',away:m.away||'',
+     prediction:m.prediction||m.analysis||m.tip||'',
+     status:m.status||'PENDING',
+     resultVerificationStatus:m.resultVerificationStatus||'',
+     result:m.result||'',
+     publishedAt:new Date().toISOString()
+   }));
+   localStorage.setItem('fa_elite_published_v1',JSON.stringify(clean));
+   localStorage.setItem('fa_elite_publish_timestamp',new Date().toISOString());
+   const msg=document.getElementById('faMiniPublishMsg');
+   if(msg) msg.textContent='✓ Published '+clean.length+' clean match record(s) to Elite Mini.';
+ }catch(e){
+   const msg=document.getElementById('faMiniPublishMsg');
+   if(msg) msg.textContent='Publish failed: '+e.message;
+ }
+}
+</script>
+</section>
+
+
+<section id="faMiniSyncV20" style="margin-top:12px">
+<style>
+#faMiniSyncV20 .syncbox{background:#fff;border:2px solid #087f3f;border-radius:14px;padding:14px}
+#faMiniSyncV20 button{border:0;border-radius:10px;padding:12px 15px;background:#087f3f;color:#fff;font-weight:900}
+#faMiniSyncV20 p{font-size:12px;font-weight:700;color:#25313b;margin:0 0 10px}
+</style>
+<div class="syncbox">
+<p>🔄 Export the latest clean published data for Elite Mini.</p>
+<button type="button" onclick="faExportMiniDataV20()">EXPORT MINI DATA</button>
+</div>
+<script>
+function faExportMiniDataV20(){
+ try{
+  const matches=JSON.parse(localStorage.getItem('fa_elite_published_v1')||'[]');
+  const payload={
+   app:'Football Analysis Elite Mini',
+   version:'2.20',
+   publishedAt:localStorage.getItem('fa_elite_publish_timestamp')||new Date().toISOString(),
+   matches:matches
+  };
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='elite_mini_published_data.json';
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+ }catch(e){alert('Mini export failed: '+e.message);}
+}
+</script>
+</section>
+
+<section id="shareToMiniV23" style="margin:12px 0">
+<style>
+#shareToMiniV23{background:#fff;border:2px solid #087b3f;border-radius:14px;padding:12px}
+#shareToMiniV23 h3{margin:0 0 6px;font-size:16px}
+#shareToMiniV23 p{font-size:11px;font-weight:700;color:#53616a}
+#shareToMiniV23 button{border:0;border-radius:10px;padding:11px 14px;background:#087b3f;color:#fff;font-weight:900}
+#shareToMiniV23 .msg{font-size:11px;font-weight:800;margin-top:7px}
+</style>
+<h3>📤 Share to Mini</h3>
+<p>Select the analyses you want to share, then press the button.</p>
+<button type="button" onclick="shareSelectedToMiniV23()">SHARE SELECTED TO MINI</button>
+<div id="shareMiniMsgV23" class="msg"></div>
+<script>
+function shareSelectedToMiniV23(){
+  let all=[];
+  const keys=['fa_matches','matches','football_matches','fa12_matches','fa21_matches','fa_data'];
+  for(const k of keys){
+    try{
+      const v=JSON.parse(localStorage.getItem(k)||'null');
+      if(Array.isArray(v)){all=v;break}
+    }catch(e){}
+  }
+
+  let selected=all.filter(x =>
+    x.shareToMini===true ||
+    x.selectedForMini===true ||
+    x.publishToMini===true ||
+    x.share===true
+  );
+
+  if(!selected.length){
+    const checked=[...document.querySelectorAll('input[type="checkbox"]:checked')];
+    const ids=new Set(checked.map(x=>String(x.value||x.dataset.id||'')));
+    selected=all.filter(x=>ids.has(String(x.id)));
+  }
+
+  if(!selected.length){
+    document.getElementById('shareMiniMsgV23').textContent='Select matches to share first.';
+    return;
+  }
+
+  const payload={
+    app:'Football Analysis Elite Mini',
+    version:'2.23',
+    publishedAt:new Date().toISOString(),
+    matches:selected
+  };
+
+  localStorage.setItem('fa_elite_published_v1',JSON.stringify(selected));
+  try{if(window.faPublishTodayToMiniV242)window.faPublishTodayToMiniV242()}catch(e){}
+  localStorage.setItem('fa_elite_share_event_v23',JSON.stringify(payload));
+
+  try{
+    const bc=new BroadcastChannel('fa_elite_mini_v23');
+    bc.postMessage(payload);
+    bc.close();
+  }catch(e){}
+
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='elite_mini_shared_data.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+
+  document.getElementById('shareMiniMsgV23').textContent=
+    '✓ Shared '+selected.length+' match(es) to Mini.';
+}
+</script>
+</section>
+
+<!-- V2.25 TODAY'S ANALYSIS PUBLISHER -->
+<script>
+(function(){
+  const PUB='fa_elite_today_analysis_v242';
+  const SHARED='fa_elite_published_v1';
+
+  function keyDate(v){
+    const d=new Date(v||'');
+    if(isNaN(d)) return '';
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function todayKey(){
+    const d=new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function getAll(){
+    const keys=['fa_matches','matches','football_matches','fa12_matches','fa21_matches','fa_data'];
+    for(const k of keys){
+      try{
+        const v=JSON.parse(localStorage.getItem(k)||'null');
+        if(Array.isArray(v)) return v;
+      }catch(e){}
+    }
+    return [];
+  }
+  function isShared(x){
+    return x && (
+      x.shareToMini===true ||
+      x.selectedForMini===true ||
+      x.publishToMini===true ||
+      x.share===true
+    );
+  }
+  function publishToday(){
+    const shared=getAll().filter(isShared);
+    const today=todayKey();
+    const todays=shared.filter(x=>keyDate(x.date||x.matchDate||x.publishedAt||x.createdAt||x.kickoff)===today);
+    localStorage.setItem(PUB,JSON.stringify(todays));
+    localStorage.setItem('fa_elite_today_timestamp_v242',new Date().toISOString());
+    return todays;
+  }
+  window.faPublishTodayToMiniV242=publishToday;
+
+  // Keep Today's Analysis current whenever the page changes storage.
+  window.addEventListener('storage',publishToday);
+  setInterval(publishToday,30000);
+  publishToday();
+})();
+</script>
+
+<script>
+(function(){
+  function refreshEliteTodayV252(){
+    try{ if(typeof fa215Render==='function') fa215Render(); }catch(e){}
+    try{ if(typeof fa216Render==='function') fa216Render(); }catch(e){}
+    try{ if(typeof giantRenderTodayV25==='function') giantRenderTodayV25(); }catch(e){}
+  }
+  window.addEventListener('load',function(){setTimeout(refreshEliteTodayV252,300);});
+  document.addEventListener('visibilitychange',function(){
+    if(!document.hidden) setTimeout(refreshEliteTodayV252,100);
+  });
+  setInterval(refreshEliteTodayV252,15000);
+})();
+</script>
+</body>
+</html>
