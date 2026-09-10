@@ -22,7 +22,7 @@ jobs:
             cp -r extracted_project/* . 2>/dev/null || true
           fi
 
-      # 🔧 Step 2: Overwrite the build.gradle file with a release configuration
+      # 🔧 Step 2: Overwrite build.gradle with production settings & auto-versioning
       - name: Overwrite broken build.gradle file
         run: |
           mkdir -p app
@@ -39,8 +39,8 @@ jobs:
                   applicationId "com.footballanalysis.app"
                   minSdk 24
                   targetSdk 35
-                  versionCode 1
-                  versionName "1.0"
+                  versionCode ${{ github.run_number }}
+                  versionName "1.0.${{ github.run_number }}"
               }
 
               buildTypes {
@@ -100,11 +100,11 @@ jobs:
             -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
             -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}"
 
-      # 📤 Step 7: Save and upload the verified package
+      # 📤 Step 7: Save and upload the verified package with dynamic build-number naming
       - name: Upload Verified APK
         uses: actions/upload-artifact@v4
         with:
-          name: Football-Analysis-Verified-APK
+          name: Football-Analysis-v1.0.${{ github.run_number }}
           path: |
             app/build/outputs/apk/release/app-release.apk
             **/build/outputs/apk/release/*.apk
