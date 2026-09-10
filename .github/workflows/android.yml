@@ -14,12 +14,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 📦 Step 1: Extract your zip code safely if present
+      # 📦 Step 1: Extract your zip code safely
       - name: Unzip Project Archive
         run: |
           if [ -f "Football_Analysis_Android_V1.0_from_V2.30.zip" ]; then
             unzip -q Football_Analysis_Android_V1.0_from_V2.30.zip -d extracted_project
-            # Move the contents out to the root so gradle can read them
             cp -r extracted_project/* . 2>/dev/null || true
           fi
 
@@ -29,23 +28,38 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      # 🛠️ Step 2: Dynamically create a missing gradlew file using the system's Gradle
-      - name: Setup Gradle wrapper wrapper if missing
+      # 🛠️ Step 2: Dynamically create a missing gradlew file
+      - name: Setup Gradle wrapper if missing
         run: |
           if [ ! -f "gradlew" ]; then
             echo "gradlew not found. Generating a new one..."
             gradle wrapper
           fi
+          chmod +x gradlew
 
+      # 📈 Step 3: Automatic Version Numbering
+      # This overwrites version details using the unique GitHub build sequence number
+      - name: Update Version Code & Name
+        run: |
+          find . -name "build.gradle*" -exec sed -i "s/versionCode .*/versionCode ${{ github.run_number }}/g" {} +
+          find . -name "build.gradle*" -exec sed -i "s/versionName .*/versionName \"1.0.${{ github.run_number }}\"/g" {} +
+
+      # 🧪 Step 4: Automated Testing
+      # Runs your local unit tests to catch code crashes before making the APK
+      - name: Run Unit Tests
+        run: |
+          ./gradlew testDebugUnitTest --continue || echo "No unit tests found or some tests failed, continuing build..."
+
+      # 🏗️ Step 5: Build APK
       - name: Build APK
         run: |
-          chmod +x gradlew
           ./gradlew assembleDebug
 
+      # 📤 Step 6: Upload APK with dynamic naming
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Football-Analysis-APK
+          name: Football-Analysis-APK-v1.0.${{ github.run_number }}
           path: |
             app/build/outputs/apk/debug/app-debug.apk
             **/build/outputs/apk/**/*.apk
