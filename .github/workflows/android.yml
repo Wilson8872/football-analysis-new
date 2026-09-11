@@ -14,6 +14,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Initialize Android Project Template
+        run: |
+          # Downloads a valid starter android project template since the repo is blank
+          git clone https://github.com temp_project
+          cp -r temp_project/* .
+          rm -rf temp_project
+          
+          # Fix package names for Football Analysis
+          find . -type f -name "*.gradle" -exec sed -i 's/com.example.android.architecture.blueprints/com.footballanalysis.app/g' {} +
+
       - name: Setup Java Runtime Engine
         uses: actions/setup-java@v5
         with:
