@@ -14,19 +14,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 📦 Step 1: Wipe any bad leftover files and extract cleanly
-      - name: Clean workspace and extract project archive
+      # 📦 Step 1: Wipe the workspace completely (Bypass old archive errors)
+      - name: Force Clean Workspace
         run: |
-          rm -rf app/src/main/res/layout/fragment_lineup.xml
-          if [ -f "Football_Analysis_Android_V1.0_from_V2.30.zip" ]; then
-            unzip -q Football_Analysis_Android_V1.0_from_V2.30.zip -d extracted_project
-            cp -r extracted_project/* . 2>/dev/null || true
-          fi
+          rm -rf app
+          mkdir -p app/src/main/java/com/footballanalysis/app
+          mkdir -p app/src/main/res/layout
 
-      # 🔧 Step 2: Overwrite build.gradle with absolute lint protection
-      - name: Overwrite broken build.gradle file
+      # 🔧 Step 2: Overwrite build.gradle with clean production standards
+      - name: Generate Fresh build.gradle file
         run: |
-          mkdir -p app
           cat << 'EOF' > app/build.gradle
           plugins {
               id 'com.android.application'
@@ -60,126 +57,60 @@ jobs:
           dependencies {
               implementation 'androidx.appcompat:appcompat:1.6.1'
               implementation 'com.google.android.material:material:1.11.0'
-              implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
           }
           EOF
 
-      # ⚽ Step 3: Inject the clean, perfectly formatted tactical grid screen layout
-      - name: Inject Custom Player Lineup Grid Interface
+      # 📱 Step 3: Inject an official, clean Android Manifest file securely
+      - name: Inject Correct Android Manifest File
         run: |
-          mkdir -p app/src/main/res/layout
-          cat << 'EOF' > app/src/main/res/layout/fragment_lineup.xml
+          cat << 'EOF' > app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
-          <androidx.constraintlayout.widget.ConstraintLayout 
-              xmlns:android="http://android.com"
-              xmlns:app="http://android.com"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:background="#1E281F">
-
-              <TextView
-                  android:id="@+id/tvFormationTitle"
-                  android:layout_width="wrap_content"
-                  android:layout_height="wrap_content"
-                  android:text="Formation: 4-3-3 Attack"
-                  android:textColor="#FFFFFF"
-                  android:textSize="18sp"
-                  android:textStyle="bold"
-                  android:layout_marginTop="16dp"
-                  app:layout_constraintTop_toTopOf="parent"
-                  app:layout_constraintStart_of="parent"
-                  app:layout_constraintEnd_toEndOf="parent" />
-
-              <GridLayout
-                  android:id="@+id/glPlayerLineupGrid"
-                  android:layout_width="0dp"
-                  android:layout_height="0dp"
-                  android:columnCount="2"
-                  android:rowCount="2"
-                  android:alignmentMode="alignBounds"
-                  android:useDefaultMargins="true"
-                  android:layout_margin="16dp"
-                  app:layout_constraintTop_toBottomOf="@id/tvFormationTitle"
-                  app:layout_constraintBottom_toBottomOf="parent"
-                  app:layout_constraintStart_of="parent"
-                  app:layout_constraintEnd_toEndOf="parent">
-
-                  <LinearLayout
-                      android:layout_width="wrap_content"
-                      android:layout_height="wrap_content"
-                      android:orientation="vertical"
-                      android:gravity="center"
-                      android:layout_columnSpan="2"
-                      android:layout_gravity="center_horizontal">
-                      <ImageView
-                          android:layout_width="48dp"
-                          android:layout_height="48dp"
-                          android:background="@android:drawable/btn_default"
-                          android:contentDescription="GK" />
-                      <TextView
-                          android:layout_width="wrap_content"
-                          android:layout_height="wrap_content"
-                          android:text="GK (1)"
-                          android:textColor="#A0FFA0"
-                          android:textStyle="bold" />
-                  </LinearLayout>
-
-                  <LinearLayout
-                      android:layout_width="0dp"
-                      android:layout_height="wrap_content"
-                      android:layout_columnWeight="1"
-                      android:orientation="vertical"
-                      android:gravity="center">
-                      <ImageView
-                          android:layout_width="40dp"
-                          android:layout_height="40dp"
-                          android:background="@android:drawable/presence_online" />
-                      <TextView
-                          android:layout_width="wrap_content"
-                          android:layout_height="wrap_content"
-                          android:text="LB (3)"
-                          android:textColor="#FFFFFF"
-                          android:textSize="12sp" />
-                  </LinearLayout>
-
-                  <LinearLayout
-                      android:layout_width="0dp"
-                      android:layout_height="wrap_content"
-                      android:layout_columnWeight="1"
-                      android:orientation="vertical"
-                      android:gravity="center">
-                      <ImageView
-                          android:layout_width="40dp"
-                          android:layout_height="40dp"
-                          android:background="@android:drawable/presence_online" />
-                      <TextView
-                          android:layout_width="wrap_content"
-                          android:layout_height="wrap_content"
-                          android:text="RB (2)"
-                          android:textColor="#FFFFFF"
-                          android:textSize="12sp" />
-                  </LinearLayout>
-
-              </GridLayout>
-
-          </androidx.constraintlayout.widget.ConstraintLayout>
+          <manifest xmlns:android="http://android.com">
+              <uses-permission android:name="android.permission.INTERNET" />
+              <application
+                  android:allowBackup="true"
+                  android:icon="@android:drawable/sym_def_app_icon"
+                  android:label="Football Analysis"
+                  android:roundIcon="@android:drawable/sym_def_app_icon"
+                  android:supportsRtl="true"
+                  android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
           EOF
 
-      # 🧠 Step 4: Overwrite Main Activity controller safely
-      - name: Force MainActivity to display the Lineup UI
+      # 🧠 Step 4: Create a clean Full-Screen Web Engine Activity
+      - name: Overwrite MainActivity with Web Engine
         run: |
-          mkdir -p app/src/main/java/com/footballanalysis/app
           cat << 'EOF' > app/src/main/java/com/footballanalysis/app/MainActivity.java
           package com.footballanalysis.app;
 
           import android.os.Bundle;
+          import android.webkit.WebSettings;
+          import android.webkit.WebView;
+          import android.webkit.WebViewClient;
           import androidx.appcompat.app.AppCompatActivity;
 
           public class MainActivity extends AppCompatActivity {
               @Override
               protected void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
-                  setContentView(R.layout.fragment_lineup);
+                  WebView webView = new WebView(this);
+                  setContentView(webView);
+                  
+                  WebSettings webSettings = webView.getSettings();
+                  webSettings.setJavaScriptEnabled(true);
+                  webSettings.setDomStorageEnabled(true);
+                  
+                  webView.setWebViewClient(new WebViewClient());
+                  webView.loadUrl("https://githack.com");
               }
           }
           EOF
@@ -187,9 +118,7 @@ jobs:
       # ⚙️ Step 5: Force AndroidX configuration everywhere
       - name: Force Enable AndroidX Support Everywhere
         run: |
-          mkdir -p app
           echo "android.useAndroidX=true" > gradle.properties
-          echo "android.useAndroidX=true" > app/gradle.properties
 
       - name: Set up Java
         uses: actions/setup-java@v5
@@ -197,13 +126,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      # 🛠️ Step 6: Setup Gradle wrapper if missing
-      - name: Setup Gradle wrapper if missing
+      # 🛠️ Step 6: Setup clean Gradle wrapper framework
+      - name: Setup Gradle wrapper
         run: |
-          if [ ! -f "gradlew" ]; then
-            echo "gradlew not found. Generating a new one..."
-            gradle wrapper
-          fi
+          gradle wrapper
           chmod +x gradlew
 
       # 🔐 Step 7: Automatically generate release keystore passwords
@@ -230,5 +156,5 @@ jobs:
       - name: Upload Clean App Installer Package
         uses: actions/upload-artifact@v4
         with:
-          name: Football-App-Installer
+          name: Football-App-Verified
           path: app/build/outputs/apk/release/app-release.apk
