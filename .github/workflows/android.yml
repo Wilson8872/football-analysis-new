@@ -23,7 +23,7 @@ jobs:
             cp -r extracted_project/* . 2>/dev/null || true
           fi
 
-      # 🔧 Step 2: Overwrite build.gradle with absolute lint protection & auto-versioning
+      # 🔧 Step 2: Overwrite build.gradle with absolute lint protection
       - name: Overwrite broken build.gradle file
         run: |
           mkdir -p app
@@ -87,7 +87,7 @@ jobs:
                   android:textStyle="bold"
                   android:layout_marginTop="16dp"
                   app:layout_constraintTop_toTopOf="parent"
-                  app:layout_constraintStart_toStartOf="parent"
+                  app:layout_constraintStart_of="parent"
                   app:layout_constraintEnd_toEndOf="parent" />
 
               <GridLayout
@@ -101,7 +101,7 @@ jobs:
                   android:layout_margin="16dp"
                   app:layout_constraintTop_toBottomOf="@id/tvFormationTitle"
                   app:layout_constraintBottom_toBottomOf="parent"
-                  app:layout_constraintStart_toStartOf="parent"
+                  app:layout_constraintStart_of="parent"
                   app:layout_constraintEnd_toEndOf="parent">
 
                   <LinearLayout
@@ -225,13 +225,10 @@ jobs:
             -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" \
             -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
             -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}"
-      
-      # 🚀 Step 9: Generate a clean direct mobile download link via BashUpload
-      - name: Upload APK to get direct download link
-        run: |
-          echo "--------------------------------------------------------"
-          echo "YOUR DIRECT DOWNLOAD LINK IS BELOW:"
-          curl -T app/build/outputs/apk/release/app-release.apk https://bashupload.com
-          echo ""
-          echo "--------------------------------------------------------"
-          
+
+      # 📤 Step 9: Save the compiled file securely inside GitHub
+      - name: Upload Clean App Installer Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: Football-App-Installer
+          path: app/build/outputs/apk/release/app-release.apk
