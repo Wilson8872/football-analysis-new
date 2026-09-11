@@ -40,8 +40,8 @@ jobs:
                   applicationId "com.footballanalysis.app"
                   minSdk 24
                   targetSdk 35
-                  versionCode ${{ github.run_number }}
-                  versionName "1.0.${{ github.run_number }}"
+                  versionCode 1
+                  versionName "1.0"
               }
 
               buildTypes {
@@ -51,7 +51,6 @@ jobs:
                   }
               }
 
-              // This block forces Gradle to build your APK even if there are typos or warnings
               lint {
                   abortOnError false
                   checkReleaseBuilds false
@@ -72,7 +71,7 @@ jobs:
           cat << 'EOF' > app/src/main/res/layout/fragment_lineup.xml
           <?xml version="1.0" encoding="utf-8"?>
           <androidx.constraintlayout.widget.ConstraintLayout 
-              xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:android="http://android.com"
               xmlns:app="http://android.com"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
@@ -227,11 +226,11 @@ jobs:
             -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
             -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}"
 
-      # 🚀 Step 9: Generate a direct mobile download link
+      # 🚀 Step 9: Generate a clean direct mobile download link
       - name: Upload APK to get direct download link
         run: |
           echo "--------------------------------------------------------"
           echo "YOUR DIRECT DOWNLOAD LINK IS BELOW:"
-          curl --upload-file app/build/outputs/apk/release/app-release.apk https://transfer.sh{{ github.run_number }}.apk
+          curl --upload-file app/build/outputs/apk/release/app-release.apk https://transfer.sh
           echo ""
           echo "--------------------------------------------------------"
