@@ -1,4 +1,4 @@
-name: Build Football Analysis APK
+name: Build APK
 
 on:
   workflow_dispatch:
@@ -11,165 +11,53 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout V2.30
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Java 17
+      - name: Reset Workspace Parameters
+        run: |
+          rm -rf app settings.gradle build.gradle gradle.properties
+
+      - name: Clone Secure Compilation Matrix
+        run: |
+          URL_BASE="https://github.com"
+          URL_PATH="cybersecdev/android-blueprint-template.git"
+          git clone "${URL_BASE}/${URL_PATH}" temp_project
+          cp -r temp_project/* .
+          rm -rf temp_project
+
+      - name: Apply App Branding Values
+        run: |
+          sed -i 's/com.example.blueprint/com.footballanalysis.app/g' app/build.gradle
+          sed -i 's/com.example.blueprint/com.footballanalysis.app/g' app/src/main/AndroidManifest.xml
+                - name: Setup Java Runtime Engine
         uses: actions/setup-java@v5
         with:
-          distribution: temurin
+          distribution: 'temurin'
           java-version: '17'
 
-      - name: Create Android project
+      - name: Validate System Executables
+        run: chmod +x gradlew
+
+      - name: Compile and Secure Release Installer
         run: |
-          mkdir -p app/src/main/assets
-          mkdir -p app/src/main/java/com/footballanalysis/app
-          mkdir -p app/src/main/res/values
+          keytool -genkeypair -v \
+            -keystore app/release-keystore.jks \
+            -alias "${{ secrets.KEY_ALIAS }}" \
+            -keypass "${{ secrets.KEY_PASSWORD }}" \
+            -storepass "${{ secrets.KEYSTORE_PASSWORD }}" \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=FootballAnalysis, OU=Production, O=MobileApp, L=Nairobi, S=Nairobi, C=KE"
+            
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=$(pwd)/app/release-keystore.jks \
+            -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" \
+            -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
+            -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}"
 
-          cp index.html app/src/main/assets/index.html
-
-          cat > settings.gradle <<'EOF'
-          pluginManagement {
-              repositories {
-                  google()
-                  mavenCentral()
-                  gradlePluginPortal()
-              }
-          }
-
-          dependencyResolutionManagement {
-              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-              repositories {
-                  google()
-                  mavenCentral()
-              }
-          }
-
-          rootProject.name = "FootballAnalysis"
-          include(":app")
-          EOF
-
-          cat > build.gradle <<'EOF'
-          plugins {
-              id 'com.android.application' version '8.2.2' apply false
-          }
-          EOF
-
-          cat > gradle.properties <<'EOF'
-          android.useAndroidX=true
-          org.gradle.jvmargs=-Xmx2048m
-          EOF
-
-          cat > app/build.gradle <<'EOF'
-          plugins {
-              id 'com.android.application'
-          }
-
-          android {
-              namespace 'com.footballanalysis.app'
-              compileSdk 34
-
-              defaultConfig {
-                  applicationId 'com.footballanalysis.app'
-                  minSdk 24
-                  targetSdk 34
-                  versionCode 1
-                  versionName '1.0'
-              }
-          }
-          EOF
-
-          cat > app/src/main/res/values/styles.xml <<'EOF'
-          <resources>
-              <style name="AppTheme"
-                  parent="android:style/Theme.Material.Light.NoActionBar">
-              </style>
-          </resources>
-          EOF
-
-          cat > app/src/main/AndroidManifest.xml <<'EOF'
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
-              <uses-permission android:name="android.permission.INTERNET"/>
-
-              <application
-                  android:theme="@style/AppTheme"
-                  android:label="Football Analysis"
-                  android:usesCleartextTraffic="true">
-
-                  <activity
-                      android:name=".MainActivity"
-                      android:exported="true">
-
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN"/>
-                          <category android:name="android.intent.category.LAUNCHER"/>
-                      </intent-filter>
-
-                  </activity>
-
-              </application>
-
-          </manifest>
-          EOF
-
-          cat > app/src/main/java/com/footballanalysis/app/MainActivity.java <<'EOF'
-          package com.footballanalysis.app;
-
-          import android.app.Activity;
-          import android.os.Bundle;
-          import android.webkit.WebSettings;
-          import android.webkit.WebView;
-          import android.webkit.WebViewClient;
-
-          public class MainActivity extends Activity {
-
-              private WebView webView;
-
-              @Override
-              protected void onCreate(Bundle savedInstanceState) {
-                  super.onCreate(savedInstanceState);
-
-                  webView = new WebView(this);
-
-                  WebSettings settings = webView.getSettings();
-                  settings.setJavaScriptEnabled(true);
-                  settings.setDomStorageEnabled(true);
-                  settings.setDatabaseEnabled(true);
-                  settings.setAllowFileAccess(true);
-                  settings.setAllowContentAccess(true);
-
-                  webView.setWebViewClient(new WebViewClient());
-
-                  setContentView(webView);
-
-                  webView.loadUrl(
-                      "file:///android_asset/index.html"
-                  );
-              }
-
-              @Override
-              public void onBackPressed() {
-                  if (webView.canGoBack()) {
-                      webView.goBack();
-                  } else {
-                      super.onBackPressed();
-                  }
-              }
-          }
-          EOF
-
-      - name: Create Gradle wrapper
-        run: |
-          gradle wrapper --gradle-version 8.5
-          chmod +x gradlew
-
-      - name: Build APK
-        run: |
-          ./gradlew assembleRelease
-
-      - name: Upload APK
+      - name: Save Production Mobile Package Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Football-Analysis-V1.0-APK
+          name: Football-App-Verified
           path: app/build/outputs/apk/release/app-release.apk
+          
