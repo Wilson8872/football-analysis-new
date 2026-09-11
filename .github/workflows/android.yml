@@ -14,14 +14,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 📦 Step 1: Wipe the workspace completely (Bypass old archive errors)
-      - name: Force Clean Workspace
+      # 📦 Step 1: Wipe workspace errors and initialize clean root parameters
+      - name: Force Clean Workspace Structure
         run: |
-          rm -rf app
+          rm -rf app settings.gradle build.gradle gradle.properties
           mkdir -p app/src/main/java/com/footballanalysis/app
           mkdir -p app/src/main/res/layout
+          echo "include ':app'" > settings.gradle
 
-      # 🔧 Step 2: Overwrite build.gradle with clean production standards
+      # 🔧 Step 2: Inject build configurations with absolute lint protection
       - name: Generate Fresh build.gradle file
         run: |
           cat << 'EOF' > app/build.gradle
@@ -60,7 +61,7 @@ jobs:
           }
           EOF
 
-      # 📱 Step 3: Inject an official, clean Android Manifest file securely
+      # 📱 Step 3: Inject clean, official native manifest permissions
       - name: Inject Correct Android Manifest File
         run: |
           cat << 'EOF' > app/src/main/AndroidManifest.xml
@@ -86,7 +87,7 @@ jobs:
           </manifest>
           EOF
 
-      # 🧠 Step 4: Create a clean Full-Screen Web Engine Activity
+      # 🧠 Step 4: Create a clean Full-Screen Web Engine Activity controller
       - name: Overwrite MainActivity with Web Engine
         run: |
           cat << 'EOF' > app/src/main/java/com/footballanalysis/app/MainActivity.java
@@ -115,7 +116,7 @@ jobs:
           }
           EOF
 
-      # ⚙️ Step 5: Force AndroidX configuration everywhere
+      # ⚙️ Step 5: Force AndroidX configuration configurations
       - name: Force Enable AndroidX Support Everywhere
         run: |
           echo "android.useAndroidX=true" > gradle.properties
@@ -126,13 +127,13 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      # 🛠️ Step 6: Setup clean Gradle wrapper framework
+      # 🛠️ Step 6: Setup a clean Gradle wrapper system architecture
       - name: Setup Gradle wrapper
         run: |
           gradle wrapper
           chmod +x gradlew
 
-      # 🔐 Step 7: Automatically generate release keystore passwords
+      # 🔐 Step 7: Automatically sign package components via keystore credentials
       - name: Generate Secure Keystore File
         run: |
           keytool -genkeypair -v \
@@ -143,7 +144,7 @@ jobs:
             -keyalg RSA -keysize 2048 -validity 10000 \
             -dname "CN=FootballAnalysis, OU=Production, O=MobileApp, L=Nairobi, S=Nairobi, C=KE"
 
-      # 🏗️ Step 8: Compile and sign the APK package
+      # 🏗️ Step 8: Assemble signed distribution APK packages
       - name: Build Signed Release APK
         run: |
           ./gradlew assembleRelease \
@@ -152,7 +153,7 @@ jobs:
             -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
             -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}"
 
-      # 📤 Step 9: Save the compiled file securely inside GitHub
+      # 📤 Step 9: Save compiled deployment artifacts securely
       - name: Upload Clean App Installer Package
         uses: actions/upload-artifact@v4
         with:
