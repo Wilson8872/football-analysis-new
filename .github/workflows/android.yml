@@ -14,36 +14,32 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Clean and Clone Project Template
-        run: |
-          rm -rf app settings.gradle build.gradle gradle.properties
-          git clone "https://github.com" temp_project
-          cp -r temp_project/* .
-          rm -rf temp_project
-          sed -i 's/com.example.blueprint/com.footballanalysis.app/g' app/build.gradle
-          sed -i 's/com.example.blueprint/com.footballanalysis.app/g' app/src/main/AndroidManifest.xml
-
       - name: Setup Java Runtime Engine
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '17'
+          cache: 'gradle'
 
       - name: Build and Sign Mobile Application
         run: |
           chmod +x gradlew
+          
+          # Generates a temporary keystore for building
           keytool -genkeypair -v \
             -keystore app/release-keystore.jks \
-            -alias "${{ secrets.KEY_ALIAS }}" \
-            -keypass "${{ secrets.KEY_PASSWORD }}" \
-            -storepass "${{ secrets.KEYSTORE_PASSWORD }}" \
+            -alias "release_alias" \
+            -keypass "temporarypassword" \
+            -storepass "temporarypassword" \
             -keyalg RSA -keysize 2048 -validity 10000 \
             -dname "CN=FootballAnalysis, OU=Production, O=MobileApp, L=Nairobi, S=Nairobi, C=KE"
+          
+          # Compiles the signed release APK
           ./gradlew assembleRelease \
             -Pandroid.injected.signing.store.file=$(pwd)/app/release-keystore.jks \
-            -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" \
-            -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
-            -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}"
+            -Pandroid.injected.signing.store.password="temporarypassword" \
+            -Pandroid.injected.signing.key.alias="release_alias" \
+            -Pandroid.injected.signing.key.password="temporarypassword"
 
       - name: Save Production Mobile Package Artifact
         uses: actions/upload-artifact@v4
