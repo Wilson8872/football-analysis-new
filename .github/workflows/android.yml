@@ -14,33 +14,24 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Reset Workspace Parameters
+      - name: Clean and Clone Project Template
         run: |
           rm -rf app settings.gradle build.gradle gradle.properties
-
-      - name: Clone Secure Compilation Matrix
-        run: |
-          URL_BASE="https://github.com"
-          URL_PATH="cybersecdev/android-blueprint-template.git"
-          git clone "${URL_BASE}/${URL_PATH}" temp_project
+          git clone "https://github.com" temp_project
           cp -r temp_project/* .
           rm -rf temp_project
-
-      - name: Apply App Branding Values
-        run: |
           sed -i 's/com.example.blueprint/com.footballanalysis.app/g' app/build.gradle
           sed -i 's/com.example.blueprint/com.footballanalysis.app/g' app/src/main/AndroidManifest.xml
-                - name: Setup Java Runtime Engine
+
+      - name: Setup Java Runtime Engine
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Validate System Executables
-        run: chmod +x gradlew
-
-      - name: Compile and Secure Release Installer
+      - name: Build and Sign Mobile Application
         run: |
+          chmod +x gradlew
           keytool -genkeypair -v \
             -keystore app/release-keystore.jks \
             -alias "${{ secrets.KEY_ALIAS }}" \
@@ -48,7 +39,6 @@ jobs:
             -storepass "${{ secrets.KEYSTORE_PASSWORD }}" \
             -keyalg RSA -keysize 2048 -validity 10000 \
             -dname "CN=FootballAnalysis, OU=Production, O=MobileApp, L=Nairobi, S=Nairobi, C=KE"
-            
           ./gradlew assembleRelease \
             -Pandroid.injected.signing.store.file=$(pwd)/app/release-keystore.jks \
             -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" \
@@ -60,4 +50,3 @@ jobs:
         with:
           name: Football-App-Verified
           path: app/build/outputs/apk/release/app-release.apk
-          
