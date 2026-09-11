@@ -11,19 +11,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      # Step 1: Securely fetch the official Android baseline blueprint using native checkouts
+      - name: Fetch Android Core Baseline Template
         uses: actions/checkout@v4
+        with:
+          repository: 'android/architecture-samples'
+          ref: 'main'
 
-      - name: Initialize Android Project Template
-        run: |
-          # Downloads a valid starter android project template since the repo is blank
-          git clone https://github.com temp_project
-          cp -r temp_project/* .
-          rm -rf temp_project
-          
-          # Fix package names for Football Analysis
-          find . -type f -name "*.gradle" -exec sed -i 's/com.example.android.architecture.blueprints/com.footballanalysis.app/g' {} +
-
+      # Step 2: Configure the Java build environment
       - name: Setup Java Runtime Engine
         uses: actions/setup-java@v5
         with:
@@ -31,11 +26,12 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
+      # Step 3: Compile your APK and sign it with fallback parameters
       - name: Build and Sign Mobile Application
         run: |
           chmod +x gradlew
           
-          # Generates a temporary keystore for building
+          # Generates a fresh template keystore for building
           keytool -genkeypair -v \
             -keystore app/release-keystore.jks \
             -alias "release_alias" \
@@ -51,6 +47,7 @@ jobs:
             -Pandroid.injected.signing.key.alias="release_alias" \
             -Pandroid.injected.signing.key.password="temporarypassword"
 
+      # Step 4: Save and bundle the finalized app binary
       - name: Save Production Mobile Package Artifact
         uses: actions/upload-artifact@v4
         with:
